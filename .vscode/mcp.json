@@ -1,0 +1,13 @@
+{
+	"servers": {
+		"my-mcp-server-1c810460": {
+			"type": "stdio",
+			"command": "continue:",
+			"args": [
+				"open",
+				"config"
+			]
+		}
+	},
+	"inputs": []
+}
