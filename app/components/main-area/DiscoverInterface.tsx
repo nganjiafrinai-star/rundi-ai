@@ -211,7 +211,7 @@ export default function DiscoverInterface() {
         {!loading && !error && articles.length > 0 && (
           <div className="space-y-8">
             <div className="lg:hidden relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-slate-100 dark:border-white/5">
-              <div className="relative h-[500px]">
+              <div className="relative h-[60vh] min-h-[400px]">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentSlide}
@@ -283,9 +283,9 @@ export default function DiscoverInterface() {
                 {featuredArticle && (
                   <article
                     onClick={() => handleArticleClick(featuredArticle)}
-                    className="bg-white dark:bg-gray-800 rounded overflow-hidden shadow-sm hover:shadow-md transition-all group cursor-pointer"
+                    className="bg-white dark:bg-gray-800 rounded overflow-hidden shadow-sm hover:shadow-md transition-all group cursor-pointer border border-slate-100 dark:border-white/5"
                   >
-                    <div className="relative h-[450px] overflow-hidden">
+                    <div className="relative h-[400px] xl:h-[500px] overflow-hidden">
                       {featuredArticle.image ? (
                         <img
                           src={featuredArticle.image}
@@ -330,15 +330,6 @@ export default function DiscoverInterface() {
                             >
                               <Share2 className="w-5 h-5" />
                             </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleArticleClick(featuredArticle);
-                              }}
-                              className="px-6 py-3 bg-white text-[#111111] hover:bg-gray-100 rounded text-sm font-bold transition-all ml-2"
-                            >
-                              Read More
-                            </button>
                           </div>
                         </div>
                       </div>
@@ -346,7 +337,7 @@ export default function DiscoverInterface() {
                   </article>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {otherArticles.map((article) => (
                     <article
                       key={article.id}
@@ -403,11 +394,23 @@ export default function DiscoverInterface() {
                       <div
                         key={index}
                         onClick={() => handleArticleClick(article)}
-                        className="group cursor-pointer flex gap-4"
+                        className="group cursor-pointer flex gap-4 items-center"
                       >
-                        <span className="flex-shrink-0 text-2xl font-black text-gray-200 dark:text-gray-700 transition-colors group-hover:text-green-600">
-                          {String(index + 1).padStart(2, '0')}
-                        </span>
+                        <div className="relative flex-shrink-0">
+                          <div className="w-16 h-16 rounded overflow-hidden bg-slate-100 dark:bg-gray-800 border border-slate-200 dark:border-white/10">
+                            {article.image ? (
+                              <img
+                                src={article.image}
+                                alt={article.title}
+                                className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-green-600/20 to-green-800/20 flex items-center justify-center">
+                                <TrendingUp className="w-6 h-6 text-green-600/40" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
                         <div className="min-w-0">
                           <h3 className="font-bold text-sm text-gray-800 dark:text-gray-200 group-hover:text-green-600 dark:group-hover:text-green-500 transition-colors line-clamp-2 leading-snug">
                             {article.title}
@@ -431,7 +434,7 @@ export default function DiscoverInterface() {
         {!loading && !error && articles.length > 0 && remainingArticles.length > 0 && (
           <div className="mt-12 space-y-6">
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white border-l-4 border-green-600 pl-4">More Stories</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
               {remainingArticles.map((article) => (
                 <article
                   key={article.id}
@@ -476,6 +479,8 @@ export default function DiscoverInterface() {
           onFavoriteToggle={toggleFavorite}
           onShare={handleShare}
           isFavorite={favorites.includes(selectedArticle.id)}
+          allArticles={articles}
+          onArticleClick={handleArticleClick}
         />
       )}
     </div>

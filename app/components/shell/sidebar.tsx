@@ -5,7 +5,8 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useChat } from '@/app/context/chatContext'
 import { useModal } from '../../context/modal/modalContext'
 import { useLanguage } from '@/app/context/languageContext'
-import { Archive, Pin, PinOff, Pencil, Trash2 } from 'lucide-react'
+import { useAuth } from '@/app/context/authContext'
+import { Archive, Pin, PinOff, Pencil, Trash2, LogOut } from 'lucide-react'
 
 interface SideNavProps {
   isCollapsed: boolean
@@ -59,6 +60,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
   const { openModal } = useModal()
   const { chatSessions, currentSession, setCurrentSession, createNewSession, deleteSession } = useChat() as any
   const { t } = useLanguage()
+  const { user, logout } = useAuth()
 
   const currentPage = pathname?.split('/')[1] || 'dashboard'
 
@@ -496,10 +498,11 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
             <button
               onClick={() => {
                 setIsMenuOpen(false)
-                router.push('/login')
+                logout()
               }}
               className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors text-sm text-red-600 dark:text-red-400 cursor-pointer"
             >
+              <LogOut className="h-4 w-4" />
               <span className="font-medium">{t.logout}</span>
             </button>
           </div>
@@ -512,13 +515,14 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
           aria-label="Open user menu"
         >
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#147E4E] text-white font-semibold text-sm">
-            A
+            {user?.name?.charAt(0) || 'U'}
           </div>
-
           {!isCollapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-slate-900 dark:text-gray-100">Amiel Nganji</span>
-              <span className="text-xs text-slate-500 dark:text-gray-400">{t.account}</span>
+              <span className="text-sm font-medium text-slate-900 dark:text-gray-100 truncate max-w-[150px]">
+                {user?.name || 'User'}
+              </span>
+              <span className="text-xs text-slate-500 dark:text-gray-400 truncate max-w-[150px]">{user?.email || t.account}</span>
             </div>
           )}
 

@@ -68,11 +68,11 @@ export function SideHeadlineSkeleton() {
 
 export function DiscoverLoadingSkeleton() {
     return (
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-10 py-6">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-8 space-y-6">
                     <FeaturedArticleSkeleton />
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         {[...Array(6)].map((_, index) => (
                             <ArticleCardSkeleton key={index} />
                         ))}

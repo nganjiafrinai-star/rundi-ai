@@ -11,6 +11,8 @@ interface ArticleModalProps {
     onFavoriteToggle?: (id: string, e: React.MouseEvent) => void
     onShare?: (article: NewsArticle, e: React.MouseEvent) => void
     isFavorite?: boolean
+    allArticles: NewsArticle[]
+    onArticleClick: (article: NewsArticle) => void
 }
 
 export default function ArticleModal({
@@ -19,7 +21,9 @@ export default function ArticleModal({
     onClose,
     onFavoriteToggle,
     onShare,
-    isFavorite
+    isFavorite,
+    allArticles,
+    onArticleClick
 }: ArticleModalProps) {
     // Close modal on Escape key press
     useEffect(() => {
@@ -42,14 +46,14 @@ export default function ArticleModal({
     if (!isOpen) return null
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/60"
                 onClick={onClose}
                 aria-hidden="true"
             />
 
-            <div className="relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-800 rounded shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative w-full h-full bg-white dark:bg-gray-900 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
                 <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-slate-200 dark:border-gray-700">
                     <div className="flex items-center gap-3">
                         <span className="px-3 py-1 bg-[#0078D4] text-white text-xs font-semibold rounded">
@@ -90,7 +94,7 @@ export default function ArticleModal({
 
                 <div className="overflow-y-auto flex-1">
                     {article.image && (
-                        <div className="relative w-full h-64 md:h-96 bg-gray-100 dark:bg-gray-800">
+                        <div className="relative w-full h-[50vh] md:h-[60vh] lg:h-[70vh] bg-gray-100 dark:bg-gray-800">
                             <img
                                 src={article.image}
                                 alt={article.title}
@@ -99,7 +103,7 @@ export default function ArticleModal({
                         </div>
                     )}
 
-                    <div className="px-6 py-8 md:px-12 md:py-10">
+                    <div className="max-w-4xl mx-auto px-6 py-8 md:px-12 md:py-12">
                         <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-gray-100 mb-4 leading-tight">
                             {article.title}
                         </h1>
@@ -131,19 +135,45 @@ export default function ArticleModal({
                             </p>
                         </div>
 
-                        {article.url && article.url !== '#' && (
-                            <div className="mt-8 pt-6 border-t border-slate-200 dark:border-gray-700">
-                                <a
-                                    href={article.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-                                >
-                                    <span>Read full article on {article.source}</span>
-                                    <ExternalLink className="w-4 h-4" />
-                                </a>
+                        <div className="mt-16 space-y-8">
+                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white border-l-4 border-green-600 pl-4">
+                                Amakuru yandi nk'aya
+                            </h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {allArticles
+                                    .filter(a => a.id !== article.id)
+                                    .slice(0, 6)
+                                    .map((similarArticle) => (
+                                        <article
+                                            key={similarArticle.id}
+                                            onClick={() => onArticleClick(similarArticle)}
+                                            className="bg-slate-50 dark:bg-gray-800/50 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group cursor-pointer border border-slate-100 dark:border-white/5"
+                                        >
+                                            <div className="relative h-40 overflow-hidden">
+                                                {similarArticle.image ? (
+                                                    <img
+                                                        src={similarArticle.image}
+                                                        alt={similarArticle.title}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-gradient-to-br from-green-600 to-green-800" />
+                                                )}
+                                            </div>
+                                            <div className="p-4">
+                                                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-green-600 transition-colors">
+                                                    {similarArticle.title}
+                                                </h3>
+                                                <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
+                                                    <span className="text-green-600 uppercase">{similarArticle.source}</span>
+                                                    <span>•</span>
+                                                    <span>{similarArticle.date}</span>
+                                                </div>
+                                            </div>
+                                        </article>
+                                    ))}
                             </div>
-                        )}
+                        </div>
                     </div>
                 </div>
             </div>

@@ -284,7 +284,7 @@ export default function DictionaryInterface() {
     : ''
 
   return (
-    <div className={`min-sm:h-screen p-6 bg-white dark:bg-gray-900`}>
+    <div className={`min-h-[calc(100vh-3.5rem)] p-4 md:p-6 bg-white dark:bg-gray-900`}>
       <style jsx global>{`
         .no-scrollbar::-webkit-scrollbar {
           display: none;
@@ -295,7 +295,7 @@ export default function DictionaryInterface() {
         }
       `}</style>
 
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
 
         <div className={`rounded ${BORDER} ${SURFACE_LIGHT} ${SURFACE_DARK} shadow-sm p-4`}>
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">

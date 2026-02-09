@@ -49,8 +49,7 @@ export default function TopNav({ onMenuClick, isMobile = false }: TopNavProps) {
               lg:hidden mr-3 p-2 rounded-xl
               bg-slate-50 hover:bg-slate-100
               dark:bg-gray-800/80 dark:hover:bg-gray-800
-              text-slate-900 dark:text-white
-              border border-slate-200 dark:border-white/10
+              text-slate-900 dark:text-white 
               transition
               ${hideMenuButton ? 'hidden' : 'flex'}
             `}
@@ -87,9 +86,9 @@ export default function TopNav({ onMenuClick, isMobile = false }: TopNavProps) {
                   href={item.path}
                   className={[
                     'group relative px-3 py-2 text-sm font-medium transition',
+                    'focus-visible:outline-none active:outline-none focus:ring-0 active:ring-0 outline-none border-none',
                     'text-slate-600 hover:text-slate-900',
                     'dark:text-gray-400 dark:hover:text-white',
-
                   ].join(' ')}
                 >
                   <span className="relative z-10">{item.name}</span>
@@ -114,7 +113,7 @@ export default function TopNav({ onMenuClick, isMobile = false }: TopNavProps) {
           </div>
         </div>
 
-        {/* Mobile bottom nav (visible on lg:hidden) */}
+        {/* Mobile bottom */}
         <div className="lg:hidden border-t border-black/10 ">
           <nav className="flex items-center justify-around px-2 py-2">
             {navItems.map((item) => {
@@ -124,17 +123,13 @@ export default function TopNav({ onMenuClick, isMobile = false }: TopNavProps) {
                   key={item.id}
                   href={item.path}
                   className={[
-                    'px-3 py-2 text-[11px] font-semibold rounded-xl transition',
+                    'px-3 py-2 text-[11px] font-semibold rounded-xl transition focus-visible:outline-none active:outline-none focus:ring-0 active:ring-0',
                     active
                       ? 'text-white shadow-sm'
                       : 'text-[#111111]/70 dark:text-white/70',
                     active
                       ? ''
                       : 'hover:bg-white/70 dark:hover:bg-[#1A1A1A]/70',
-                    'border border-transparent',
-                    active
-                      ? 'border-black/10 dark:border-white/10'
-                      : 'hover:border-black/10 dark:hover:border-white/10',
                   ].join(' ')}
                   style={active ? { backgroundColor: ACCENT } : undefined}
                 >

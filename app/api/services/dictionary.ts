@@ -61,7 +61,11 @@ export async function searchDictionary(
         return { entries: [], total: 0 }
     }
 
-    let results = response.data.map(mapRawToEntry)
+    const rawData: any[] = Array.isArray(response.data)
+        ? response.data
+        : (response.data as any).results || (response.data as any).entries || (response.data as any).data || []
+
+    let results: DictionaryEntry[] = rawData.map((raw: any, i: number) => mapRawToEntry(raw, i))
 
     // Apply local filters since the API seems to just return a list
     const { posFilter = 'all' } = filters

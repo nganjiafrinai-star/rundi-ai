@@ -230,8 +230,8 @@ export default function TraductionInterface() {
 
 
   return (
-    <div className={`min-sm:h-screen p-6 ${BG_LIGHT} ${BG_DARK}`}>
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className={`min-h-[calc(100vh-3.5rem)] p-4 md:p-6 ${BG_LIGHT} ${BG_DARK}`}>
+      <div className="max-w-7xl mx-auto space-y-6">
         <div className={`rounded ${BORDER} ${SURFACE_LIGHT} ${SURFACE_DARK} shadow-sm p-4`}>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">

@@ -17,21 +17,7 @@ import {
 import { useChat } from '@/app/context/chatContext'
 import { useLanguage } from '@/app/context/languageContext'
 import { searchVerbs } from '@/app/api/services/verbs'
-import type { VerbEntry } from '@/app/api/types/verbs.types'
-
-type TenseKey = 'kubu' | 'kahises' | 'Kahise' | 'Kazoza'
-
-type Conjugaisons = {
-  [key in TenseKey]?: {
-    label: string
-    rows: Array<{ person: string; form: string }>
-  }
-} & {
-  [key: string]: {
-    label: string
-    rows: Array<{ person: string; form: string }>
-  } | undefined
-}
+import type { VerbEntry, TenseKey, Conjugations } from '@/app/api/types/verbs.types'
 
 // VerbEntry is imported from '@/app/api/types/verbs.types'
 
@@ -40,7 +26,7 @@ export default function VerbsInterface() {
   const { t } = useLanguage()
   const [query, setQuery] = useState('')
   const [language, setLanguage] = useState<'Kirundi'>('Kirundi')
-  const [tense, setTense] = useState<string>('Indagihe')
+  const [tense, setTense] = useState<TenseKey>('kubu')
   const [selectedId, setSelectedId] = useState<number>(1)
 
   const [copied, setCopied] = useState<'inf' | 'table' | null>(null)
@@ -105,8 +91,12 @@ export default function VerbsInterface() {
       setSearching(!!query.trim())
       setError(null)
       try {
-        const result = await searchVerbs({ query, limit: 100 } as any)
+        const result = await searchVerbs({ query, limit: 100 })
         setVerbs(result.verbs)
+        // Auto-select first result if current selection is invalid or missing
+        if (result.verbs.length > 0 && (!selectedId || !result.verbs.some((v: VerbEntry) => v.id === selectedId))) {
+          setSelectedId(result.verbs[0].id)
+        }
       } catch (err) {
         setError('Failed to load verbs. Please try again.')
         console.error(err)
@@ -229,7 +219,7 @@ export default function VerbsInterface() {
     : ''
 
   return (
-    <div className="min-sm:h-screen bg-white dark:bg-gray-900 p-6">
+    <div className="min-h-[calc(100vh-3.5rem)] bg-white dark:bg-gray-900 p-4 md:p-6">
       <style jsx global>{`
         .no-scrollbar::-webkit-scrollbar {
           display: none;
@@ -240,7 +230,7 @@ export default function VerbsInterface() {
         }
       `}</style>
 
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         <div className="rounded dark:border-white/10 bg-white dark:bg-gray-800 shadow-sm p-4">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             <div className="flex-1 flex items-center gap-2">

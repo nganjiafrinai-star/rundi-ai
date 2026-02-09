@@ -4,6 +4,7 @@ import { useRef, useEffect, useState, type ChangeEvent, type KeyboardEvent } fro
 import { Send, Bot, Paperclip, ChevronDown, Copy, Share2, Pencil, Check } from 'lucide-react'
 import { useChat } from '@/app/context/chatContext'
 import { useLanguage } from '@/app/context/languageContext'
+import ReactMarkdown from 'react-markdown'
 
 type ChatMsg = {
   id: number
@@ -26,64 +27,32 @@ const TypingIndicator = () => (
 )
 
 const MessageContent = ({ text, isBot = false }: { text: string; isBot?: boolean }) => {
-  const lines = text.split('\n')
-  const elements: React.ReactNode[] = []
-  let currentList: { type: 'ul' | 'ol'; items: string[] } | null = null
-
-  const flushList = (keyPrefix: string) => {
-    if (currentList) {
-      if (currentList.type === 'ul') {
-        elements.push(
-          <ul key={keyPrefix} className="list-disc pl-5 space-y-1 mb-2">
-            {currentList.items.map((item, i) => (
-              <li key={i}>{item}</li>
-            ))}
-          </ul>
-        )
-      } else {
-        elements.push(
-          <ol key={keyPrefix} className="list-decimal pl-5 space-y-1 mb-2">
-            {currentList.items.map((item, i) => (
-              <li key={i}>{item}</li>
-            ))}
-          </ol>
-        )
-      }
-      currentList = null
-    }
-  }
-
-  lines.forEach((line, index) => {
-    const trimmed = line.trim()
-    const bulletMatch = trimmed.match(/^[-*•]\s+(.*)/)
-    const numberMatch = trimmed.match(/^(\d+)[.)]\s+(.*)/)
-
-    if (bulletMatch) {
-      if (currentList && currentList.type !== 'ul') flushList(`list-${index}`)
-      if (!currentList) currentList = { type: 'ul', items: [] }
-      currentList.items.push(bulletMatch[1])
-    } else if (numberMatch) {
-      if (currentList && currentList.type !== 'ol') flushList(`list-${index}`)
-      if (!currentList) currentList = { type: 'ol', items: [] }
-      currentList.items.push(numberMatch[2])
-    } else {
-      flushList(`list-${index}`)
-      if (trimmed) {
-        elements.push(
-          <p key={index} className="mb-2 last:mb-0">
-            {line}
-          </p>
-        )
-      } else if (index < lines.length - 1) {
-        elements.push(<div key={index} className="h-2" />)
-      }
-    }
-  })
-  flushList('final-list')
+  const filteredText = isBot ? text.replace(/<(think|thought|regex)>[\s\S]*?<\/\1>/gi, '').trim() : text
 
   return (
     <div className={`leading-relaxed ${isBot ? 'text-slate-900 dark:text-gray-100' : ''}`}>
-      {elements}
+      <ReactMarkdown
+        components={{
+          p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+          ul: ({ node, ...props }) => <ul className="list-disc pl-5 space-y-1 mb-2" {...props} />,
+          ol: ({ node, ...props }) => <ol className="list-decimal pl-5 space-y-1 mb-2" {...props} />,
+          li: ({ node, ...props }) => <li {...props} />,
+          a: ({ node, ...props }) => (
+            <a
+              className="text-[#147E4E] hover:underline transition-all"
+              target="_blank"
+              rel="noopener noreferrer"
+              {...props}
+            />
+          ),
+          strong: ({ node, ...props }) => <strong className="font-bold text-slate-800 dark:text-white" {...props} />,
+          code: ({ node, ...props }) => (
+            <code className="bg-slate-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono" {...props} />
+          ),
+        }}
+      >
+        {filteredText}
+      </ReactMarkdown>
     </div>
   )
 }
@@ -382,7 +351,7 @@ export default function ChatBoxInterface() {
   }
 
   return (
-    <div className="flex-1 h-[540px] flex flex-col bg-white dark:bg-gray-900 relative">
+    <div className="flex-1 h-[calc(100vh-3.5rem)] flex flex-col bg-white dark:bg-gray-900 relative">
       {showWelcome ? (
         <div className="flex-1 flex flex-col items-center justify-center p-6 bg-gradient-to-b from-transparent to-black/[0.02] dark:to-white/[0.02]">
           <div className="w-full max-w-3xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
