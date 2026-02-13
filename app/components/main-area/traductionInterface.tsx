@@ -11,6 +11,7 @@ import { useChat } from '@/app/context/chatContext'
 import { useLanguage } from '@/app/context/languageContext'
 import { searchTranslationWords } from '@/app/api/services/translation'
 import type { DictionaryEntry } from '@/app/api/types/dictionary.types'
+import Footer2 from '../footer2'
 
 type Lang = 'Français' | 'English' | 'Kirundi' | 'Swahili'
 
@@ -80,14 +81,14 @@ export default function TraductionInterface() {
 
   const ACCENT = '#147E4E' // Corrected to brand green
   const BG_LIGHT = 'bg-white'
-  const BG_DARK = 'dark:bg-gray-900'
+  const BG_DARK = 'dark:bg-gray-800'
   const SURFACE_LIGHT = 'bg-white'
-  const SURFACE_DARK = 'dark:bg-gray-800'
+  const SURFACE_DARK = 'dark:bg-[#36384F]'
   const BORDER = 'border border-gray-100 dark:border-gray-800'
   const TEXT = 'text-slate-900 dark:text-gray-100'
   const MUTED = 'text-slate-500 dark:text-gray-400'
   const MUTED2 = 'text-slate-400 dark:text-gray-500'
-  const SOFT = 'bg-gray-50/50 dark:bg-gray-900/60'
+  const SOFT = 'bg-gray-50/50 dark:bg-gray-800'
   const SOFT2 = 'bg-gray-100/50 dark:bg-gray-800/10'
 
 
@@ -230,8 +231,8 @@ export default function TraductionInterface() {
 
 
   return (
-    <div className={`min-h-[calc(100vh-3.5rem)] p-4 md:p-6 ${BG_LIGHT} ${BG_DARK}`}>
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className={`min-h-[calc(100vh-3.5rem)] p-4 md:p-6 ${BG_LIGHT} ${BG_DARK} flex flex-col`}>
+      <div className="flex-1 max-w-7xl mx-auto space-y-6">
         <div className={`rounded ${BORDER} ${SURFACE_LIGHT} ${SURFACE_DARK} shadow-sm p-4`}>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
@@ -442,6 +443,7 @@ export default function TraductionInterface() {
             </div>
           </div>
         </div>
+        <Footer2 />
 
 
       </div>

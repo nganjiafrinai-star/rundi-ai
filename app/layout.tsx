@@ -12,6 +12,8 @@ import RowPage from '@/app/components/shell/rowPage'
 import Footer from '@/app/components/footer'
 import { ThemeProvider } from '@/app/providers/theme-provider'
 import { LanguageProvider } from '@/app/context/languageContext'
+import { NewsProvider } from '@/app/context/newsContext'
+import WhatsAppFloatingButton from '@/app/components/WhatsAppFloatingButton'
 import "./globals.css"
 
 function AppContent({ children }: { children: React.ReactNode }) {
@@ -20,13 +22,14 @@ function AppContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname()
     const router = useRouter()
     const { isAuthenticated, isLoading } = useAuth()
-    
-    const isLoginPage = pathname === '/login'
-    const isDiscoverPage = pathname === '/discover'
-    const isLinksPage = ['/politic', '/utilisation', '/security', '/faq', '/careers', '/condition'].includes(pathname)
-    const isPublicPage = isLoginPage || isDiscoverPage || isLinksPage
 
-    const handleToggleSidebar = () => {
+    const isLoginPage = pathname === '/login' || pathname === '/register'
+    const isDiscoverPage = pathname === '/discover'
+    const isNewsPage = pathname.startsWith('/news')
+    const isLinksPage = ['/politic', '/utilisation', '/security', '/faq', '/careers', '/condition'].includes(pathname)
+    const isPublicPage = isLoginPage || isDiscoverPage || isLinksPage || isNewsPage
+
+    const handleToggleSenderBar = () => {
         setSidebarCollapsed(!sidebarCollapsed)
     }
 
@@ -45,11 +48,11 @@ function AppContent({ children }: { children: React.ReactNode }) {
     }, [isLoading, isAuthenticated, isPublicPage, router])
 
     if (isLoading || (!isAuthenticated && !isPublicPage)) {
-      return (
-        <div className="flex h-screen items-center justify-center bg-white dark:bg-gray-900">
-          <div className="w-12 h-12 border-4 border-green-500/20 border-t-green-500 rounded-full animate-spin" />
-        </div>
-      )
+        return (
+            <div className="flex h-screen items-center justify-center bg-white dark:bg-gray-900">
+                <div className="w-12 h-12 border-4 border-green-500/20 border-t-green-500 rounded-full animate-spin" />
+            </div>
+        )
     }
 
     if (isLoginPage) {
@@ -65,7 +68,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
                 />
             )}
 
-            {!isDiscoverPage && !isLinksPage && (
+            {!isDiscoverPage && !isLinksPage && !isNewsPage && (
                 <div
                     className={`
                         fixed inset-y-0 left-0 z-50 w-[280px] transform transition-transform duration-300 ease-in-out
@@ -76,20 +79,21 @@ function AppContent({ children }: { children: React.ReactNode }) {
                 >
                     <SideNav
                         isCollapsed={sidebarCollapsed}
-                        onToggleCollapse={handleToggleSidebar}
+                        onToggleCollapse={handleToggleSenderBar}
                         onMobileClose={closeMobileSidebar}
                     />
                 </div>
             )}
 
             <div className="flex flex-1 flex-col min-w-0">
-                <TopNav onMenuClick={toggleMobileSidebar} />
+                {!isNewsPage && <TopNav onMenuClick={toggleMobileSidebar} />}
                 <RowPage>
                     {children}
-                    {isLinksPage && <Footer />}
+                    {(isLinksPage || isNewsPage || isDiscoverPage) && <Footer />}
                 </RowPage>
             </div>
 
+            {(isLinksPage || isNewsPage || isDiscoverPage) && <WhatsAppFloatingButton />}
             <ModalRoot />
         </div>
     )
@@ -113,9 +117,11 @@ export default function RootLayout({
                         <LanguageProvider>
                             <AuthProvider>
                                 <ChatProvider>
-                                    <ModalProvider>
-                                        <AppContent>{children}</AppContent>
-                                    </ModalProvider>
+                                    <NewsProvider>
+                                        <ModalProvider>
+                                            <AppContent>{children}</AppContent>
+                                        </ModalProvider>
+                                    </NewsProvider>
                                 </ChatProvider>
                             </AuthProvider>
                         </LanguageProvider>

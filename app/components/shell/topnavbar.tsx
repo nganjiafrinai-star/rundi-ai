@@ -3,13 +3,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ThemeToggle } from '../theme-toggle'
+import { useLanguage } from '@/app/context/languageContext'
 
 interface TopNavProps {
   onMenuClick?: () => void
   isMobile?: boolean
 }
-
-import { useLanguage } from '@/app/context/languageContext'
 
 export default function TopNav({ onMenuClick, isMobile = false }: TopNavProps) {
   const { t } = useLanguage()
@@ -23,11 +22,10 @@ export default function TopNav({ onMenuClick, isMobile = false }: TopNavProps) {
     { id: 'discover', name: t.discover, path: '/discover' },
   ]
 
-  const ACCENT = '#1DB954'
+  const ACCENT = '#147e4e'
 
   const currentPage = pathname?.split('/')[1] || 'dashboard'
-  const currentLabel =
-    navItems.find((item) => item.id === currentPage)?.name || 'Rundi AI'
+  const currentLabel = navItems.find((item) => item.id === currentPage)?.name || 'Rundi AI'
 
   const hideMenuButton = pathname === '/discover'
 
@@ -35,7 +33,7 @@ export default function TopNav({ onMenuClick, isMobile = false }: TopNavProps) {
     <header
       className="
         sticky top-0 z-20
-        bg-white dark:bg-gray-900
+        bg-white dark:bg-[#36384F]
         border-b border-slate-200 dark:border-gray-800
         transition-colors
       "
@@ -49,60 +47,38 @@ export default function TopNav({ onMenuClick, isMobile = false }: TopNavProps) {
               lg:hidden mr-3 p-2 rounded-xl
               bg-slate-50 hover:bg-slate-100
               dark:bg-gray-800/80 dark:hover:bg-gray-800
-              text-slate-900 dark:text-white 
+              text-slate-900 dark:text-white
               transition
               ${hideMenuButton ? 'hidden' : 'flex'}
             `}
             aria-label="Open menu"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 12h18M3 6h18M3 18h18"
-              />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12h18M3 6h18M3 18h18" />
             </svg>
           </button>
 
           <div className="lg:hidden flex-1">
-            <span className="font-semibold text-lg text-slate-900 dark:text-white">
-              {currentLabel}
-            </span>
+            <span className="font-semibold text-lg text-slate-900 dark:text-white">{currentLabel}</span>
           </div>
 
-          <nav className="hidden lg:flex items-center gap-2 mx-auto">
+          {/* Desktop */}
+          <nav className="hidden lg:flex items-center gap-5 mx-auto">
             {navItems.map((item) => {
               const isActive = currentPage === item.id
-
               return (
                 <Link
                   key={item.id}
                   href={item.path}
                   className={[
-                    'group relative px-3 py-2 text-sm font-medium transition',
+                    'text-sm font-medium transition-colors',
                     'focus-visible:outline-none active:outline-none focus:ring-0 active:ring-0 outline-none border-none',
-                    'text-slate-600 hover:text-slate-900',
-                    'dark:text-gray-400 dark:hover:text-white',
+                    isActive
+                      ? 'text-[#147E4E]'
+                      : 'text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white',
                   ].join(' ')}
                 >
-                  <span className="relative z-10">{item.name}</span>
-
-                  <span
-                    className={[
-                      'pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-1',
-                      'h-[2px] rounded transition-all duration-300 ease-out',
-                      isActive
-                        ? 'w-[70%] opacity-100'
-                        : 'w-0 opacity-0 group-hover:w-[70%] group-hover:opacity-100',
-                    ].join(' ')}
-                    style={{ backgroundColor: ACCENT }}
-                  />
+                  {item.name}
                 </Link>
               )
             })}
@@ -113,8 +89,8 @@ export default function TopNav({ onMenuClick, isMobile = false }: TopNavProps) {
           </div>
         </div>
 
-        {/* Mobile bottom */}
-        <div className="lg:hidden border-t border-black/10 ">
+        {/* Mobile bottom (no bg, no border, only color like PC) */}
+        <div className="lg:hidden border-t border-black/10">
           <nav className="flex items-center justify-around px-2 py-2">
             {navItems.map((item) => {
               const active = currentPage === item.id
@@ -123,15 +99,11 @@ export default function TopNav({ onMenuClick, isMobile = false }: TopNavProps) {
                   key={item.id}
                   href={item.path}
                   className={[
-                    'px-3 py-2 text-[11px] font-semibold rounded-xl transition focus-visible:outline-none active:outline-none focus:ring-0 active:ring-0',
-                    active
-                      ? 'text-white shadow-sm'
-                      : 'text-[#111111]/70 dark:text-white/70',
-                    active
-                      ? ''
-                      : 'hover:bg-white/70 dark:hover:bg-[#1A1A1A]/70',
+                    'px-2 py-2 text-[11px] font-semibold transition-colors',
+                    'focus-visible:outline-none active:outline-none focus:ring-0 active:ring-0 outline-none border-none',
+                    active ? 'text-[#147E4E]' : 'text-[#111111]/70 dark:text-white/70 hover:text-[#111111] dark:hover:text-white',
                   ].join(' ')}
-                  style={active ? { backgroundColor: ACCENT } : undefined}
+                  style={active ? { color: ACCENT } : undefined}
                 >
                   {item.name}
                 </Link>

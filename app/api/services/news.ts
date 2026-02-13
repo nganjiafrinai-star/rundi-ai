@@ -30,20 +30,34 @@ export async function searchNews(
 
         if (response.data) {
             const results = response.data.articles || response.data.results || []
-            const articles: NewsArticle[] = results.map((item: any, index: number) => ({
-                id: item.article_id || item.url || `${Date.now()}-${index}`,
-                title: item.title || 'Untitled',
-                description: item.description || item.content?.substring(0, 200) || '',
-                content: item.content || item.description || '',
-                category: item.category?.[0] || category,
-                source: item.source_id || item.source?.name || 'Unknown Source',
-                author: item.creator?.[0] || item.author || null,
-                date: formatDate(item.publishedAt || item.pubDate || new Date().toISOString()),
-                readTime: calculateReadTime(item.content || item.description || ''),
-                image: item.image_url || item.urlToImage || null,
-                url: item.link || item.url || '#',
-                featured: index === 0,
-            }))
+            const articles: NewsArticle[] = results.map((item: any, index: number) => {
+                const rawId = item.article_id || item.url || `${Date.now()}-${index}`;
+
+                let safeId = '';
+                try {
+                    safeId = btoa(unescape(encodeURIComponent(rawId)))
+                        .replace(/\//g, '_')
+                        .replace(/\+/g, '-')
+                        .replace(/=/g, '');
+                } catch (e) {
+                    safeId = `news-${Date.now()}-${index}`;
+                }
+
+                return {
+                    id: safeId,
+                    title: item.title || 'Untitled',
+                    description: item.description || item.content?.substring(0, 200) || '',
+                    content: item.content || item.description || '',
+                    category: item.category?.[0] || category,
+                    source: item.source_id || item.source?.name || 'Unknown Source',
+                    author: item.creator?.[0] || item.author || null,
+                    date: formatDate(item.publishedAt || item.pubDate || new Date().toISOString()),
+                    readTime: calculateReadTime(item.content || item.description || ''),
+                    image: item.image_url || item.urlToImage || null,
+                    url: item.link || item.url || '#',
+                    featured: index === 0,
+                };
+            })
 
             return { articles, total: articles.length }
         }

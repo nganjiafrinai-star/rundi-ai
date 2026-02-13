@@ -89,7 +89,7 @@ const Utilisation = () => {
                             "Consultez la documentation et les tutoriels intégrés.",
                         ],
                     },
-                ].map((step, index) => (
+                ].map(({ title, content }, index) => (
                    <motion.div
                         className="bg-white dark:bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-lg mt-12"
                         variants={fadeInUp}

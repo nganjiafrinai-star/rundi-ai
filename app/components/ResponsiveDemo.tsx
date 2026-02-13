@@ -2,14 +2,6 @@
 
 import { useBreakpoint, useIsMobile, useIsDesktop, useOrientation, useWindowSize, ResponsiveContainer, ResponsiveGrid, ResponsiveText, ShowOn, spacing, fontSize } from '@/app/utils/responsive'
 
-/**
- * Responsive Demo Component
- * 
- * This component demonstrates all responsive utilities and patterns
- * available in the Rundi AI application.
- * 
- * Usage: Import and render this component on any page to see responsive features in action
- */
 export default function ResponsiveDemo() {
     const breakpoint = useBreakpoint()
     const isMobile = useIsMobile()

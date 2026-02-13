@@ -10,7 +10,7 @@ export default function DownloadModal() {
 
   return (
     <Modal title={t.downloadApp} onClose={closeModal} size="md">
-      <div className="flex flex-col items-center text-center space-y-6 py-4">
+      <div className="flex flex-col dark:bg-[#36384F] items-center text-center space-y-6 py-4">
         <div className="space-y-2">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t.getApp}</h3>
           <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">

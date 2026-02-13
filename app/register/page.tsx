@@ -64,7 +64,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] dark:bg-gray-900 transition-colors duration-300">
+    <div className="min-h-screen dark:bg-[#36384F] transition-colors duration-300">
       <div className="mx-auto flex min-h-screen max-w-[520px] flex-col items-center px-6">
         <div className="pt-10" />
         <RundiLogo />
@@ -74,7 +74,7 @@ export default function RegisterPage() {
             Koreshe imeri yanyu mu kwiyandikisha
           </p>
 
-          <div className="rounded-full border border-black/10 dark:border-gray-700 bg-white dark:bg-gray-800 px-5 py-3 shadow-sm focus-within:border-[#2F59FF]/40 dark:focus-within:border-blue-500/40 transition-colors">
+          <div className="rounded border-1 dark:border-white bg-white dark:bg-gray-800 px-5 py-3 shadow-sm focus-within:border-[#2F59FF]/40 dark:focus-within:border-blue-500/40 transition-colors">
             <input
               className="w-full bg-transparent text-[14px] text-black/80 dark:text-gray-200 outline-none placeholder:text-black/35 dark:placeholder:text-gray-500"
               placeholder="Injiza imeri yanyu"
@@ -85,7 +85,7 @@ export default function RegisterPage() {
             />
           </div>
 
-          <div className="mt-4 flex items-center rounded-full border border-black/10 dark:border-gray-700 bg-white dark:bg-gray-800 px-5 py-3 shadow-sm focus-within:border-[#2F59FF]/40 dark:focus-within:border-blue-500/40 transition-colors">
+          <div className="mt-4 flex items-center rounded border-1 dark:border-white bg-white dark:bg-gray-800 px-5 py-3 shadow-sm focus-within:border-[#2F59FF]/40 dark:focus-within:border-blue-500/40 transition-colors">
             <input
               className="w-full bg-transparent text-[14px] text-black/80 dark:text-gray-200 outline-none placeholder:text-black/35 dark:placeholder:text-gray-500"
               placeholder="Injize kabanga nshasha"
@@ -97,14 +97,14 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setShowPw((v) => !v)}
-              className="ml-2 rounded-full p-1 hover:bg-black/5 dark:hover:bg-gray-700 transition-colors"
+              className="ml-2 rounded p-1 hover:bg-black/5 dark:hover:bg-gray-700 transition-colors"
               aria-label={showPw ? 'Hide password' : 'Show password'}
             >
               <EyeIcon open={showPw} />
             </button>
           </div>
 
-          <div className="mt-4 flex items-center rounded-full border border-black/10 dark:border-gray-700 bg-white dark:bg-gray-800 px-5 py-3 shadow-sm focus-within:border-[#2F59FF]/40 dark:focus-within:border-blue-500/40 transition-colors">
+          <div className="mt-4 flex items-center rounded border-1  dark:border-white bg-white dark:bg-gray-800 px-5 py-3 shadow-sm focus-within:border-[#2F59FF]/40 dark:focus-within:border-blue-500/40 transition-colors">
             <input
               className="w-full bg-transparent text-[14px] text-black/80 dark:text-gray-200 outline-none placeholder:text-black/35 dark:placeholder:text-gray-500"
               placeholder="Subira winjize kabanga"
@@ -116,7 +116,7 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setShowPw2((v) => !v)}
-              className="ml-2 rounded-full p-1 hover:bg-black/5 dark:hover:bg-gray-700 transition-colors"
+              className="ml-2 rounded p-1 hover:bg-black/5 dark:hover:bg-gray-700 transition-colors"
               aria-label={showPw2 ? 'Hide password' : 'Show password'}
             >
               <EyeIcon open={showPw2} />
@@ -146,7 +146,7 @@ export default function RegisterPage() {
           <button
             type="button"
             onClick={handleRegister}
-            className="mt-5 w-full rounded-full bg-[#28C766] dark:bg-green-600 py-4 text-[15px] font-medium text-white hover:brightness-110 active:brightness-95 transition-all"
+            className="mt-5 w-full rounded  dark:bg-[#147e4e] py-4 text-[15px] font-medium text-white hover:brightness-110 active:brightness-95 transition-all"
           >
             Iyandikishe
           </button>
@@ -154,7 +154,7 @@ export default function RegisterPage() {
           <div className="mt-4 text-center">
             <Link
               href="/login"
-              className="text-[14px] text-green-500 dark:text-green-400 hover:opacity-90 transition-opacity"
+              className="text-[14px] text-green-500 dark:text-[#147e4e] hover:opacity-90 transition-opacity"
             >
               Injire
             </Link>

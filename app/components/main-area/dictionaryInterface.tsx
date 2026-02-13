@@ -19,6 +19,7 @@ import { useChat } from '@/app/context/chatContext'
 import { useLanguage } from '@/app/context/languageContext'
 import { searchDictionary } from '@/app/api/services/dictionary'
 import type { DictionaryEntry } from '@/app/api/types/dictionary.types'
+import Footer2 from '../footer2'
 
 export default function DictionaryInterface() {
   const { currentSession, updateSession } = useChat()
@@ -123,17 +124,17 @@ export default function DictionaryInterface() {
 
   const ACCENT = '#28C766' // CustomVert
   const BG_LIGHT = 'bg-white' // CustomLightGray
-  const BG_DARK = 'dark:bg-gray-900' // CustomBlack
+  const BG_DARK = 'dark:bg-gray-800' // CustomBlack
   const SURFACE_LIGHT = 'bg-white' // CustomWhite
-  const SURFACE_DARK = 'dark:bg-gray-800'
+  const SURFACE_DARK = 'dark:bg-[#36384F]'
   const BORDER = 'border border-gray-100 dark:border-white/10'
   const TEXT = 'text-slate-900 dark:text-white'
   const MUTED = 'text-slate-500 dark:text-white/65'
   const MUTED2 = 'text-slate-400 dark:text-white/50'
-  const SOFT = 'bg-gray-50/50 dark:bg-gray-900/60'
+  const SOFT = 'bg-gray-50/50 dark:bg-gray-800'
   const SOFT2 = 'bg-black/[0.05] dark:bg-gray-800/10'
-  const SELECTED_ROW = 'bg-green-100 dark:bg-[#12301E]' // green tint
-  const SELECTED_PILL = 'bg-green-100 text-[#0F3D22] dark:bg-[#12301E] dark:text-[#BFF3D2]'
+  const SELECTED_ROW = 'bg-green-100 dark:bg-[#143e24]' // green tint
+  const SELECTED_PILL = 'bg-green-100 text-[#0F3D22] dark:bg-[#143e24] dark:text-[#BFF3D2]'
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -284,7 +285,7 @@ export default function DictionaryInterface() {
     : ''
 
   return (
-    <div className={`min-h-[calc(100vh-3.5rem)] p-4 md:p-6 bg-white dark:bg-gray-900`}>
+    <div className={`min-h-[calc(100vh-3.5rem)] p-4 md:p-6 bg-white ${BG_DARK} transition-colors flex flex-col`}>
       <style jsx global>{`
         .no-scrollbar::-webkit-scrollbar {
           display: none;
@@ -295,7 +296,7 @@ export default function DictionaryInterface() {
         }
       `}</style>
 
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex-1 max-w-7xl mx-auto space-y-6">
 
         <div className={`rounded ${BORDER} ${SURFACE_LIGHT} ${SURFACE_DARK} shadow-sm p-4`}>
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
@@ -335,13 +336,11 @@ export default function DictionaryInterface() {
                 )}
               </div>
 
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value as any)}
+              <span
                 className={`px-3 py-2.5 text-sm rounded dark:hover:bg-black outline-none ${TEXT}`}
               >
-                <option>Kirundi</option>
-              </select>
+                Kirundi
+              </span>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -570,6 +569,7 @@ export default function DictionaryInterface() {
           </div>
         </div>
       )}
+      <Footer2 />
     </div>
   )
 }

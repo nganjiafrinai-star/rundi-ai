@@ -1,8 +1,3 @@
-
-/**
- * Normalized tense keys used within the application.
- * These are mapped from the various possible keys returned by the API.
- */
 export type TenseKey = 'kubu' | 'kahises' | 'Kahise' | 'Kazoza' | 'Indagihe'
 
 export type VerbLanguage = 'Kirundi'

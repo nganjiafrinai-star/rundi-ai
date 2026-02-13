@@ -15,7 +15,7 @@ export default function GeneralSection() {
     const ACCENT = '#147E4E'
 
     return (
-        <section className="space-y-4">
+        <section className="space-y-4 ">
             <div className="flex items-center gap-2 mb-1">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-[#147E4E]">{t.settings}</h3>
             </div>

@@ -18,6 +18,7 @@ import { useChat } from '@/app/context/chatContext'
 import { useLanguage } from '@/app/context/languageContext'
 import { searchVerbs } from '@/app/api/services/verbs'
 import type { VerbEntry, TenseKey, Conjugations } from '@/app/api/types/verbs.types'
+import Footer2 from '../footer2'
 
 // VerbEntry is imported from '@/app/api/types/verbs.types'
 
@@ -219,7 +220,7 @@ export default function VerbsInterface() {
     : ''
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] bg-white dark:bg-gray-900 p-4 md:p-6">
+    <div className="min-h-[calc(100vh-3.5rem)] bg-white dark:bg-gray-800 p-4 md:p-6 flex flex-col">
       <style jsx global>{`
         .no-scrollbar::-webkit-scrollbar {
           display: none;
@@ -230,8 +231,8 @@ export default function VerbsInterface() {
         }
       `}</style>
 
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="rounded dark:border-white/10 bg-white dark:bg-gray-800 shadow-sm p-4">
+      <div className="flex-1 max-w-7xl mx-auto space-y-6">
+        <div className="rounded dark:border-white/10 bg-white dark:bg-[#36384F] shadow-sm p-4">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             <div className="flex-1 flex items-center gap-2">
               <div className="relative flex-1">
@@ -249,7 +250,7 @@ export default function VerbsInterface() {
                 />
 
                 {suggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white dark:bg-gray-800 border border-black/10 dark:border-white/10 rounded-lg shadow-lg overflow-hidden">
+                  <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white dark:bg-[#36384F] border border-black/10 dark:border-white/10 rounded-lg shadow-lg overflow-hidden">
                     {suggestions.map((s) => (
                       <button
                         key={s.id}
@@ -280,7 +281,7 @@ export default function VerbsInterface() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4">
-          <div className="rounded dark:border-[#2A2A2A] bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
+          <div className="rounded dark:border-[#2A2A2A] bg-white dark:bg-[#36384F] shadow-sm overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-200 dark:border-[#2A2A2A] flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-700 dark:text-gray-200">{t.verbs} • {language}</span>
               <span className="text-[11px] text-gray-500 dark:text-gray-400">{t.chooseVerb}</span>
@@ -320,7 +321,7 @@ export default function VerbsInterface() {
             </div>
           </div>
 
-          <div className="rounded dark:border-[#2A2A2A] bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
+          <div className="rounded dark:border-[#2A2A2A] bg-white dark:bg-[#36384F] shadow-sm overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-200 dark:border-[#2A2A2A] flex items-center justify-between">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
@@ -448,6 +449,7 @@ export default function VerbsInterface() {
           </div>
         </div>
       )}
+      <Footer2 />
     </div>
   )
 }

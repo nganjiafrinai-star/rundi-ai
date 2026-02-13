@@ -2,6 +2,6 @@
 
 import DiscoverInterface from '@/app/components/main-area/DiscoverInterface'
 
-export default function DiscoverPage() {
-  return <DiscoverInterface />
+export default function NewsPage() {
+    return <DiscoverInterface />
 }

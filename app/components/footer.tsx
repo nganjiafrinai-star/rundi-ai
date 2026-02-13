@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { Facebook, Instagram, Linkedin, Youtube } from "lucide-react";
 import "../globals.css"
 
@@ -7,10 +8,10 @@ const Footer = () => {
         <footer className="bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 py-12 border-t border-black/10 dark:border-white/10">
             <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10">
                 <div>
-                    <h2 className="text-1.5xl font-bold text-[#111111] dark:text-white mb-4">RUNDI AI</h2>
+                    <Link href="/dashboard" className="text-1.5xl font-bold text-[#111111] dark:text-white mb-4">RUNDI AI</Link>
                     <p className="text-sm leading-relaxed opacity-80">
                         Ibiboneka vyose kuri Rundi AI.
-                        Izere ubwenge bw'ubugezweho mu rurimi rwacu.
+                        Izere ubuhinga bugezweho mu rurimi rwacu.
                     </p>
                 </div>
 
@@ -45,14 +46,14 @@ const Footer = () => {
                     <h3 className="text-lg font-semibold mb-4 text-[#111111] dark:text-white">Contact</h3>
                     <ul className="space-y-2 text-sm">
                         <li>
-                            <a href="tel:+25767903000" className="hover:text-[#28C766] transition">
-                                +257 67 903 000
-                            </a>
+                            <p>
+                                +257 62 489 585
+                            </p>
                         </li>
                         <li>
-                            <a href="mailto:info@bi-wep.bi" className="hover:text-[#28C766] transition">
-                                info@bi-wep.bi
-                            </a>
+                            <p>
+                                info@afrinai.com
+                            </p>
                         </li>
                     </ul>
                 </div>

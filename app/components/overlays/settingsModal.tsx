@@ -21,7 +21,7 @@ export default function SettingsModal() {
       id: 'download', label: 'Download App', icon: HelpCircle, component: () => {
         return (
           <div className="flex flex-col items-center justify-center h-full space-y-4 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#147E4E]/10 text-[#147E4E]">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#147E4E]/10 dark:bg-[#36384F] text-[#147E4E]">
               <HelpCircle className="h-8 w-8" />
             </div>
             <h3 className="text-lg font-bold">Mobile Application</h3>
@@ -48,9 +48,9 @@ export default function SettingsModal() {
 
   return (
     <Modal title="Settings" onClose={closeModal} size="xl">
-      <div className="flex h-[450px] -mx-4 md:-mx-6 -mb-4 md:-mb-6 border-t border-black/5 dark:border-white/5">
+      <div className="flex h-[450px] -mx-4 md:-mx-6 -mb-4 md:-mb-6 border-t border-black/5 dark:border-white/5 dark:bg-[#36384F]">
         
-        <div className="w-[140px] md:w-[180px] border-r border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-white/[0.02] py-4">
+        <div className="w-[140px] md:w-[180px] border-r border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-[#36384F] py-4">
           <nav className="space-y-1 px-2">
             {tabs.map((tab) => (
               <button

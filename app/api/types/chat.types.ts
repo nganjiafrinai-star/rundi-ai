@@ -1,14 +1,7 @@
-/**
- * Chat API types
- */
-
 export type ChatCategory = 'Global' | 'Santé' | 'Élevage' | 'Commerce' | 'Agriculture'
 
-export type ChatDomain = 'globale' | 'sante' | 'elevage' | 'commerce' | 'agriculture'
+export type ChatDomain = 'global' | 'sante' | 'elevage' | 'commerce' | 'agriculture'
 
-/**
- * Chat message structure
- */
 export interface ChatMessage {
     id: number
     text: string
@@ -17,9 +10,6 @@ export interface ChatMessage {
     category?: string
 }
 
-/**
- * Chat request payload
- */
 export interface ChatRequest {
     user_id: string
     session_id: string
@@ -27,19 +17,16 @@ export interface ChatRequest {
     message: string
 }
 
-/**
- * Chat response from API
- */
+
 export interface ChatResponse {
     answer?: string
     response?: string
     message?: string
 }
 
-/**
- * Chat session state
- */
+
 export interface ChatSessionState {
     chatHistory: ChatMessage[]
     selectedCategory: string
+    backendSessionId?: string
 }

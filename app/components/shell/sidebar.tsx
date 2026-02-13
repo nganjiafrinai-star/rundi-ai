@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useChat } from '@/app/context/chatContext'
 import { useModal } from '../../context/modal/modalContext'
 import { useLanguage } from '@/app/context/languageContext'
@@ -14,36 +14,27 @@ interface SideNavProps {
   onMobileClose?: () => void
 }
 
-type HistoryMeta = {
-  pinned?: boolean
-  customTitle?: string
-  archived?: boolean
-}
-
-type HistoryMetaMap = Record<string, HistoryMeta>
-
-const META_KEY = 'rundi.history.meta.v1'
-
-function readMeta(): HistoryMetaMap {
-  if (typeof window === 'undefined') return {}
-  try {
-    const raw = window.localStorage.getItem(META_KEY)
-    return raw ? (JSON.parse(raw) as HistoryMetaMap) : {}
-  } catch {
-    return {}
-  }
-}
-
-function writeMeta(next: HistoryMetaMap) {
-  if (typeof window === 'undefined') return
-  try {
-    window.localStorage.setItem(META_KEY, JSON.stringify(next))
-  } catch {
-    // ignore
-  }
-}
-
 export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }: SideNavProps) {
+  const pathname = usePathname()
+  const { t } = useLanguage()
+  const { user, logout } = useAuth()
+  const { openModal } = useModal()
+
+  const {
+    chatSessions,
+    currentSession,
+    setCurrentSession,
+    createNewSession,
+    deleteSession,
+    archiveSession,
+    pinSession,
+    renameSession,
+    updateSession,
+    meta,
+    updateMeta,
+  } = useChat()
+
+  // user menu
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -51,65 +42,46 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
   const [openDotsForId, setOpenDotsForId] = useState<string | number | null>(null)
   const dotsMenuRef = useRef<HTMLDivElement>(null)
 
-  // local meta (pin/rename/archive) stored in localStorage
-  const [meta, setMeta] = useState<HistoryMetaMap>({})
-
-  const pathname = usePathname()
-  const router = useRouter()
-
-  const { openModal } = useModal()
-  const { chatSessions, currentSession, setCurrentSession, createNewSession, deleteSession } = useChat() as any
-  const { t } = useLanguage()
-  const { user, logout } = useAuth()
-
   const currentPage = pathname?.split('/')[1] || 'dashboard'
-
-  // load meta on mount
-  useEffect(() => {
-    setMeta(readMeta())
-  }, [])
-
-  // helper to update meta
-  const updateMeta = (sessionId: string | number, patch: HistoryMeta) => {
-    const key = String(sessionId)
-    setMeta((prev) => {
-      const next = { ...prev, [key]: { ...(prev[key] || {}), ...patch } }
-      writeMeta(next)
-      return next
-    })
-  }
 
   const filteredSessions = useMemo(() => {
     const list = (chatSessions || []).filter((s: any) => s.page === currentPage)
 
+    const notArchived = list.filter((s: any) => {
+      const localArchived = !!meta[String(s.id)]?.archived
+      const storeArchived = !!s.isArchived
+      return !(storeArchived || localArchived)
+    })
 
-    const notArchived = list.filter((s: any) => !meta[String(s.id)]?.archived)
-
-    // Show sessions that have messages (Chat) OR a meaningful state (Trad/Dict/Verbs)
     const withContent = notArchived.filter((s: any) => {
       const hasMessages = s.messages && s.messages.length > 0
-      const hasState = s.state && Object.values(s.state).some(v => v && String(v).trim().length > 0)
+      const hasState = s.state && Object.values(s.state).some((v: any) => v && String(v).trim().length > 0)
       return hasMessages || hasState
     })
 
-    const withMeta = withContent.map((s: any) => {
-      const m = meta[String(s.id)]
+    const processed = withContent.map((s: any) => {
+      const localPinned = !!meta[String(s.id)]?.pinned
+      const storePinned = !!s.isPinned
+      const localTitle = meta[String(s.id)]?.customTitle?.trim()
+      const storeTitle = s.customTitle?.trim()
+
       return {
         ...s,
-        __pinned: !!m?.pinned,
-        __title: (m?.customTitle?.trim() ? m.customTitle : s.title) ?? s.title,
+        __pinned: storePinned || localPinned,
+        __title: (storeTitle || localTitle || s.title) ?? s.title,
       }
     })
 
-    withMeta.sort((a: any, b: any) => {
+    processed.sort((a: any, b: any) => {
       if (a.__pinned !== b.__pinned) return a.__pinned ? -1 : 1
-      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      const timeA = new Date(a.updatedAt || a.timestamp).getTime()
+      const timeB = new Date(b.updatedAt || b.timestamp).getTime()
+      return timeB - timeA
     })
 
-    return withMeta
+    return processed
   }, [chatSessions, currentPage, meta])
 
-  // ✅ Create a default area automatically (first time you land on a page with no history)
   const initRef = useRef<Record<string, boolean>>({})
   useEffect(() => {
     if (!currentPage) return
@@ -121,18 +93,15 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
     }
   }, [chatSessions, filteredSessions.length, currentPage, createNewSession])
 
-  const toggleUserMenu = () => setIsMenuOpen((v) => !v)
-
-  // close user menu on outside click
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setIsMenuOpen(false)
+      const target = e.target as Node
+      if (menuRef.current && !menuRef.current.contains(target)) setIsMenuOpen(false)
     }
     if (isMenuOpen) document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
   }, [isMenuOpen])
 
-  // close dots menu on outside click / escape
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
       if (dotsMenuRef.current && !dotsMenuRef.current.contains(e.target as Node)) setOpenDotsForId(null)
@@ -151,49 +120,60 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
     }
   }, [openDotsForId])
 
-  const handleNewChat = () => {
-    // Avoid creating multiple empty sessions FOR THE SAME PAGE
-    if (currentSession &&
+  const handleNewChat = async () => {
+    const FIXED_USER_ID = 'be4ff3ae-dc3c-49c1-b3e6-385e81d3a5dd'
+
+    if (
+      currentSession &&
       currentSession.page === currentPage &&
       (!currentSession.messages || currentSession.messages.length === 0) &&
-      (!currentSession.state || Object.keys(currentSession.state).length === 0)) {
+      (!currentSession.state || Object.keys(currentSession.state).length === 0)
+    ) {
       if (onMobileClose) onMobileClose()
       return
     }
-    createNewSession(currentPage as any)
-    if (onMobileClose) onMobileClose()
-  }
 
-  // Auto-switch currentSession when changing pages via top icons
-  useEffect(() => {
-    if (!currentPage) return
-
-    // If we're on a session that doesn't match the current page, 
-    // try to find the latest session with content for this page, or create a new one.
-    if (!currentSession || currentSession.page !== currentPage) {
-      const pageSessions = (chatSessions || []).filter((s: any) => s.page === currentPage)
-
-      const sessionWithContent = pageSessions.find((s: any) => {
-        const hasMessages = s.messages && s.messages.length > 0
-        const hasState = s.state && Object.values(s.state).some(v => v && String(v).trim().length > 0)
-        return hasMessages || hasState
+    try {
+      const res = await fetch("/api/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: FIXED_USER_ID,
+          first_message: "New session"
+        })
       })
 
-      if (sessionWithContent) {
-        setCurrentSession(sessionWithContent)
-      } else if (pageSessions.length > 0) {
-        // Fallback to latest empty if no content found
-        // Sort by timestamp and take the latest
-        const latest = [...pageSessions].sort((a: any, b: any) =>
-          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        )[0]
-        setCurrentSession(latest)
-      } else {
-        // No sessions for this page yet, start a fresh one
-        createNewSession(currentPage as any)
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create backend session")
       }
+
+      const backendSessionId = data.session_id || data.id || data?.data?.session_id
+      if (!backendSessionId && !data.detail?.includes("No sessions found")) {
+        throw new Error("No session id found in backend response")
+      }
+
+      const newSession = createNewSession(currentPage as any)
+      if (newSession) {
+        updateSession(newSession.id, {
+          state: {
+            ...(newSession.state || {}),
+            backendSessionId: backendSessionId || null,
+            chatHistory: [],
+            selectedCategory: (t as any)[currentPage] || 'Global'
+          }
+        })
+        setCurrentSession(newSession)
+      }
+
+    } catch (err: any) {
+      console.error("New chat error:", err)
+      alert(err.message)
     }
-  }, [currentPage, chatSessions.length])
+
+    if (onMobileClose) onMobileClose()
+  }
 
   const handleSessionClick = (session: any) => {
     setCurrentSession(session)
@@ -209,55 +189,66 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
     if (onMobileClose) onMobileClose()
   }
 
-  const onPinToggle = (session: any) => {
-    const key = String(session.id)
-    const pinned = !!meta[key]?.pinned
-    updateMeta(session.id, { pinned: !pinned })
-    setOpenDotsForId(null)
-  }
-
-  const onRename = (session: any) => {
-    const currentTitle = meta[String(session.id)]?.customTitle?.trim() || session.__title || session.title || ''
-    const nextTitle = window.prompt(t.renamePrompt, currentTitle)?.trim()
-    if (!nextTitle) return
-    updateMeta(session.id, { customTitle: nextTitle })
-    setOpenDotsForId(null)
-
+  const onPinToggle = async (session: any) => {
+    const nextPinned = !(session.isPinned || meta[String(session.id)]?.pinned)
     try {
-      if (typeof (useChat() as any).renameSession === 'function') {
-        ; (useChat() as any).renameSession(session.id, nextTitle)
-      }
+      await pinSession(session.id, nextPinned)
+      setOpenDotsForId(null)
     } catch {
       // ignore
     }
   }
 
-  const onArchiver = (session: any) => {
-    updateMeta(session.id, { archived: true })
-    setOpenDotsForId(null)
-    if (currentSession?.id === session.id) setCurrentSession(null)
+  const onRename = async (session: any) => {
+    const currentTitle =
+      session.customTitle?.trim() ||
+      meta[String(session.id)]?.customTitle?.trim() ||
+      session.__title ||
+      session.title ||
+      ''
+    const nextTitle = window.prompt(t.renamePrompt, currentTitle)?.trim()
+    if (!nextTitle) return
+
+    try {
+      await renameSession(session.id, nextTitle)
+      setOpenDotsForId(null)
+    } catch {
+      // ignore
+    }
   }
 
-  const onDelete = (session: any) => {
-    setOpenDotsForId(null)
-    deleteSession(session.id)
-
-    const key = String(session.id)
-    setMeta((prev) => {
-      if (!prev[key]) return prev
-      const next = { ...prev }
-      delete next[key]
-      writeMeta(next)
-      return next
-    })
+  const onArchiver = async (session: any) => {
+    try {
+      await archiveSession(session.id)
+      setOpenDotsForId(null)
+      if (currentSession?.id === session.id) setCurrentSession(null)
+    } catch {
+      // ignore
+    }
   }
+
+  const onDelete = async (session: any) => {
+    const ok = window.confirm((t as any).deleteConfirm ?? 'Delete this conversation?')
+    if (!ok) return
+
+    setOpenDotsForId(null)
+    try {
+      await deleteSession(session.id)
+      if (currentSession?.id === session.id) setCurrentSession(null)
+    } catch {
+      // ignore
+    }
+  }
+
+  const newInterfaceRadius = isCollapsed ? 'rounded-full' : 'rounded'
+  const userProfileRadius = isCollapsed ? 'rounded-full' : 'rounded-lg'
 
   return (
     <aside
-      className={`flex h-screen flex-col bg-slate-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-r border-slate-200 dark:border-gray-800 transition-all duration-300 ${isCollapsed ? 'lg:w-16' : 'w-[280px]'
+      className={`flex h-screen flex-col bg-slate-50 dark:bg-[#36384F] text-gray-900 dark:text-gray-100 border-r border-slate-200 dark:border-gray-800 transition-all duration-300 ${isCollapsed ? 'lg:w-16' : 'w-[280px]'
         }`}
     >
-      {/* ✅ Mobile header */}
+      {/*  Mobile header */}
       <div className="lg:hidden flex items-center justify-between px-4 py-4 border-b border-sidebar-border">
         {!isCollapsed && (
           <div className="flex items-center">
@@ -306,13 +297,13 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
         </button>
       </div>
 
-      {/* New interface */}
+      {/* New interface collapsed */}
       <div className="px-4 pb-3 mt-2">
         {isCollapsed ? (
           <button
             type="button"
             onClick={handleNewChat}
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-[#147E4E] hover:bg-[#0F6A3F] dark:bg-[#147E4E] dark:hover:opacity-70 p-3 hover:opacity-90 transition-all duration-200 cursor-pointer"
+            className={`flex items-center justify-center ${newInterfaceRadius} bg-[#147e4e] hover:opacity-90 dark:bg-[#147e4e] dark:hover:opacity-70 transition-all duration-200 cursor-pointer w-10 h-10 mx-auto`}
             aria-label={t.newInterface}
             title={t.newInterface}
           >
@@ -322,7 +313,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
           <button
             type="button"
             onClick={handleNewChat}
-            className="flex w-full items-center justify-center gap-2 rounded dark:bg-green-600 bg-primary hover:bg-primary/90 dark:hover:opacity-90 px-4 py-3 text-sm font-medium hover:opacity-90 hover:shadow-md dark:hover:shadow-lg transition-all duration-200 cursor-pointer"
+            className={`flex w-full items-center justify-center gap-2 ${newInterfaceRadius} bg-[#147e4e] hover:opacity-90 dark:bg-[#147e4e] dark:hover:opacity-90 px-4 py-3 text-sm font-medium hover:shadow-md dark:hover:shadow-lg transition-all duration-200 cursor-pointer`}
           >
             <span className="text-base text-white">+</span>
             <span className="text-white">{t.newInterface}</span>
@@ -348,7 +339,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
               <div className="space-y-1">
                 {filteredSessions.map((session: any) => {
                   const isActive = currentSession?.id === session.id
-                  const isPinned = !!meta[String(session.id)]?.pinned
+                  const isPinned = !!(session.isPinned || meta[String(session.id)]?.pinned)
 
                   return (
                     <div
@@ -356,10 +347,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                       onClick={() => handleSessionClick(session)}
                       className={`
                         group relative flex items-center gap-3 rounded p-1 cursor-pointer transition-all duration-150
-                        ${isActive
-                          ? 'bg-[#147E4E]/10 dark:bg-[#147E4E]/20 p-2'
-                          : 'hover:bg-slate-200/50 dark:hover:bg-gray-800'
-                        }
+                        ${isActive ? 'bg-[#147e4e]/10 dark:bg-[#36334F] p-2' : 'hover:bg-slate-200/50 dark:hover:bg-[#36334F]/20'}
                       `}
                     >
                       <div className="flex-1 min-w-0">
@@ -368,10 +356,10 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
 
                           {isPinned && (
                             <span
-                              className="inline-flex items-center justify-center rounded-md bg-[#147E4E]/15 text-[#147E4E] dark:bg-[#147E4E]/20"
+                              className="inline-flex items-center justify-center rounded-md bg-[#147e4e]/15 text-[#147e4e] dark:bg-[#147e4e]/20"
                               title="Pinned"
                             >
-                              <Pin className="h-3.5 w-3.5 fill-[#147E4E]" />
+                              <Pin className="h-3.5 w-3.5 fill-[#147e4e]" />
                             </span>
                           )}
                         </div>
@@ -380,16 +368,14 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                       </div>
 
                       <div className="flex flex-col items-end gap-2">
-                        <span className="text-xs text-gray-400 dark:text-gray-500">{formatTime(session.timestamp)}</span>
 
-                        {/* dots button */}
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation()
                             setOpenDotsForId((prev) => (prev === session.id ? null : session.id))
                           }}
-                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-gray-200 dark:hover:bg-[#2A2A2A] transition-opacity cursor-pointer"
+                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-gray-200 dark:hover:bg-[#36334F] transition-opacity cursor-pointer"
                           aria-label="History actions"
                           title="Actions"
                         >
@@ -400,17 +386,16 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                           </svg>
                         </button>
 
-                        {/* popup */}
                         {openDotsForId === session.id && (
                           <div
                             ref={dotsMenuRef}
-                            className="absolute right-3 top-[54px] w-52 bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-[#2A2A2A] rounded shadow-lg overflow-hidden z-50"
+                            className="absolute right-3 top-[54px] w-52 bg-white dark:bg-[#36334F] border border-gray-200 dark:border-[#36334F] rounded shadow-lg overflow-hidden z-50"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <button
                               type="button"
                               onClick={() => onRename(session)}
-                              className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
+                              className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-[#36334F] text-gray-700 dark:text-gray-200"
                             >
                               <Pencil className="h-4 w-4" />
                               <span>{t.rename}</span>
@@ -419,7 +404,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                             <button
                               type="button"
                               onClick={() => onPinToggle(session)}
-                              className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-[#2A2A2A] text-gray-700 dark:text-gray-200"
+                              className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-[#36334F] text-gray-700 dark:text-gray-200"
                             >
                               {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
                               <span>{isPinned ? t.unpin : t.pin}</span>
@@ -428,7 +413,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                             <button
                               type="button"
                               onClick={() => onArchiver(session)}
-                              className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-[#2A2A2A] text-gray-700 dark:text-gray-200"
+                              className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-[#36334F] text-gray-700 dark:text-gray-200"
                             >
                               <Archive className="h-4 w-4" />
                               <span>{t.archive}</span>
@@ -459,9 +444,9 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                 onClick={() => handleSessionClick(session)}
                 className={`
                   grid h-9 w-9 place-items-center rounded-lg text-sm cursor-pointer
-                  ${currentSession?.id === session.id ? 'ring-2 ring-[#147E4E]' : ''}
+                  ${currentSession?.id === session.id ? 'ring-2 ring-[#147e4e]' : ''}
                   ${session.page === 'dashboard'
-                    ? 'bg-[#147E4E]/15 dark:bg-[#147E4E]/20 text-[#147E4E]'
+                    ? 'bg-[#147e4e]/15 dark:bg-[#147e4e]/20 text-[#147e4e]'
                     : session.page === 'traduction'
                       ? 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300'
                       : session.page === 'dictionary'
@@ -478,19 +463,28 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
         )}
       </div>
 
-      <div className="p-4 shadow dark:border-[#2A2A2A] relative" ref={menuRef}>
-        {!isCollapsed && isMenuOpen && (
-          <div className="absolute bottom-full left-0 right-0 mb-2 mx-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-[#2A2A2A] z-50 overflow-hidden">
+      <div className="p-4 shadow dark:border-[#36334F] relative" ref={menuRef}>
+        {isMenuOpen && (
+          <div
+            className={`
+              absolute bottom-full mb-2 z-50 overflow-hidden
+              bg-white dark:bg-[#36334F]
+              border border-gray-200 dark:border-[#36334F]
+              rounded-lg shadow-lg
+              ${isCollapsed ? 'left-14 w-56' : 'left-0 right-0 mx-4'}
+            `}
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               onClick={() => handleMenuItemClick('settings')}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-[#2A2A2A] transition-colors text-sm text-gray-700 dark:text-gray-200 border-b border-gray-100 dark:border-[#2A2A2A] cursor-pointer"
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-[#36334F] transition-colors text-sm text-gray-700 dark:text-gray-200 border-b border-gray-100 dark:border-[#36334F] cursor-pointer"
             >
               <span>{t.settings}</span>
             </button>
 
             <button
               onClick={() => handleMenuItemClick('download')}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-[#2A2A2A] transition-colors text-sm text-gray-700 dark:text-gray-200 border-b border-gray-100 dark:border-[#2A2A2A] cursor-pointer"
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-[#36334F] transition-colors text-sm text-gray-700 dark:text-gray-200 border-b border-gray-100 dark:border-[#36334F] cursor-pointer"
             >
               <span>{t.downloadApp}</span>
             </button>
@@ -510,19 +504,32 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
 
         <button
           type="button"
-          onClick={toggleUserMenu}
-          className="flex items-center gap-3 w-full text-left hover:bg-gray-50 dark:hover:bg-[#2A2A2A] rounded-lg p-2 transition-colors cursor-pointer"
+          onClick={() => setIsMenuOpen((v) => !v)}
+          className={`
+            flex items-center gap-3 w-full text-left hover:bg-gray-50 dark:hover:bg-[#36334F] transition-colors cursor-pointer
+            ${userProfileRadius}
+            ${isCollapsed ? 'w-10 h-10 p-0 justify-center mx-auto' : 'p-2'}
+          `}
           aria-label="Open user menu"
+          title={user?.name || 'User'}
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#147E4E] text-white font-semibold text-sm">
+          <div
+            className={`
+              flex h-8 w-8 items-center justify-center bg-[#147e4e] text-white font-semibold text-sm
+              ${isCollapsed ? 'rounded-full' : 'rounded-full'}
+            `}
+          >
             {user?.name?.charAt(0) || 'U'}
           </div>
+
           {!isCollapsed && (
             <div className="flex flex-col">
               <span className="text-sm font-medium text-slate-900 dark:text-gray-100 truncate max-w-[150px]">
                 {user?.name || 'User'}
               </span>
-              <span className="text-xs text-slate-500 dark:text-gray-400 truncate max-w-[150px]">{user?.email || t.account}</span>
+              <span className="text-xs text-slate-500 dark:text-gray-400 truncate max-w-[150px]">
+                {user?.email || (t as any).account}
+              </span>
             </div>
           )}
 

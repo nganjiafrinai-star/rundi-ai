@@ -27,10 +27,7 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 
-/**
- * ✅ No crash version:
- * If provider is missing, return safe no-op functions.
- */
+
 export function useModal(): ModalCtx {
   const ctx = useContext(Ctx)
 

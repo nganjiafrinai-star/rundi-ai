@@ -37,8 +37,8 @@ export default function Modal({
 
 
       {/* Modal Container */}
-      <div className={`relative z-10 w-[95%] ${sizeClasses[size as keyof typeof sizeClasses]} rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-[#2A2A2A] p-4 md:p-6 shadow-2xl transition-all scale-100`}>
-        <div className="flex items-center justify-between gap-3 border-b border-black/5 dark:border-white/5 pb-3">
+      <div className={`relative z-10 w-[95%] ${sizeClasses[size as keyof typeof sizeClasses]} rounded-2xl bg-white dark:bg-[#36384F] border border-gray-200 dark:border-[#2A2A2A] p-4 md:p-6 shadow-2xl transition-all scale-100`}>
+        <div className="flex items-center justify-between gap-3 pb-3">
           <h2 className="text-base md:text-lg font-bold text-gray-900 dark:text-gray-100">{title}</h2>
           <button
             onClick={onClose}

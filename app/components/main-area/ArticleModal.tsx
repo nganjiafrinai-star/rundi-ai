@@ -1,6 +1,6 @@
 'use client'
 
-import { X, ExternalLink, Clock, User, Calendar, Bookmark, Share2 } from 'lucide-react'
+import { X, Clock, User, Calendar, Bookmark, Share2 } from 'lucide-react'
 import { NewsArticle } from '@/app/api/types/news.types'
 import { useEffect } from 'react'
 
@@ -125,19 +125,19 @@ export default function ArticleModal({
                             </div>
                         </div>
 
-                        <p className="text-lg text-slate-700 dark:text-gray-300 mb-6 leading-relaxed">
+                        <p className="text-lg text-slate-700 dark:text-gray-300 mb-6 leading-relaxed text-left">
                             {article.description}
                         </p>
 
                         <div className="prose prose-lg dark:prose-invert max-w-none">
-                            <p className="text-slate-800 dark:text-gray-200 leading-relaxed whitespace-pre-line">
+                            <p className="text-slate-800 dark:text-gray-200 leading-relaxed whitespace-pre-line text-left">
                                 {article.content}
                             </p>
                         </div>
 
                         <div className="mt-16 space-y-8">
                             <h2 className="text-2xl font-bold text-slate-900 dark:text-white border-l-4 border-green-600 pl-4">
-                                Amakuru yandi nk'aya
+                                Amakuru yandi nk&apos;aya
                             </h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {allArticles
