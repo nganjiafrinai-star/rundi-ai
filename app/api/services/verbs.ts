@@ -77,40 +77,45 @@ export async function searchVerbs(
 ): Promise<VerbSearchResult> {
   const { query = '', limit = 100 } = filters
 
-  const url = getEndpointUrl('VERBS', API_ENDPOINTS.VERBS.SEARCH)
+  const baseUrl = getEndpointUrl('VERBS', API_ENDPOINTS.VERBS.SEARCH)
+  const trimmedQuery = query.trim().toLowerCase()
+
+  const requestUrl = trimmedQuery
+    ? `${baseUrl}/${encodeURIComponent(trimmedQuery)}`
+    : `${baseUrl}?limit=${encodeURIComponent(String(limit))}`
 
   let response: { data?: any; error?: unknown }
   try {
-    response = await get<any>(`${url}?limit=${encodeURIComponent(String(limit))}`)
-  } catch {
+    response = await get<any>(requestUrl)
+  } catch (err) {
+    console.error('Verb API error:', err)
     return { verbs: [], total: 0 }
   }
 
-  if (response?.error || !response?.data) {
+  if (response?.error || response?.data == null) {
     return { verbs: [], total: 0 }
   }
 
-  const rawData = Array.isArray(response.data)
-    ? response.data
-    : response.data.results || response.data.verbs || response.data.data || []
+  let rawData: any[]
+  if (trimmedQuery) {
+    rawData = Array.isArray(response.data)
+      ? response.data
+      : response.data
+        ? [response.data]
+        : []
+  } else {
+    rawData = Array.isArray(response.data)
+      ? response.data
+      : response.data.results || response.data.verbs || response.data.data || []
+  }
 
-  let results = rawData
+  const results = rawData
     .map((raw: any, i: number) => mapRawToVerbEntry(raw, i))
     .sort((a: VerbEntry, b: VerbEntry) => a.infinitive.localeCompare(b.infinitive))
 
-  if (query.trim()) {
-    const q = query.trim().toLowerCase()
-    results = results.filter((verb: VerbEntry) => {
-      return (
-        verb.infinitive.toLowerCase().includes(q) ||
-        verb.meaning.toLowerCase().includes(q)
-      )
-    })
-  }
-
-  return { 
-    verbs: results, 
-    total: response.data.total || results.length 
+  return {
+    verbs: results,
+    total: results.length,
   }
 }
 

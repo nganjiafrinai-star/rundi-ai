@@ -10,7 +10,7 @@ const Utilisation = () => {
     return (
         <section
             id="utilisation"
-            className="min-h-screen bg-[#F2F2F2] dark:bg-gray-900 text-[#0F0F0F] dark:text-gray-100 px-6 py-26 md:px-20"
+            className="min-h-screen bg-background text-foreground px-6 py-26 md:px-20"
         >
             <motion.div
                 className="max-w-4xl mx-auto text-center"
@@ -90,14 +90,14 @@ const Utilisation = () => {
                         ],
                     },
                 ].map(({ title, content }, index) => (
-                   <motion.div
-                        className="bg-white dark:bg-gray-800 border border-gray-700 rounded-2xl p-6 shadow-lg mt-12"
+                    <motion.div
+                        className="bg-card border border-border rounded-2xl p-6 shadow-lg mt-12"
                         variants={fadeInUp}
                         initial="hidden"
                         whileInView="visible"
                         viewport={{ once: true }}
                         transition={{ duration: 0.5 }}
-                        >
+                    >
                         <h2 className="text-2xl font-semibold text-indigo-400 mb-4">
                             Bonnes pratiques :
                         </h2>
@@ -111,7 +111,7 @@ const Utilisation = () => {
                 ))}
 
                 <motion.div
-                    className="bg-white dark:bg-gray-800 border border-[#E5E7EB] dark:border-[#2A2A2A] rounded-2xl p-6 shadow-sm mt-12"
+                    className="bg-card border border-border rounded-2xl p-6 shadow-sm mt-12"
                     variants={fadeInUp}
                     initial="hidden"
                     whileInView="visible"

@@ -21,7 +21,7 @@ export default function SettingsModal() {
       id: 'download', label: 'Download App', icon: HelpCircle, component: () => {
         return (
           <div className="flex flex-col items-center justify-center h-full space-y-4 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#147E4E]/10 dark:bg-[#36384F] text-[#147E4E]">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
               <HelpCircle className="h-8 w-8" />
             </div>
             <h3 className="text-lg font-bold">Mobile Application</h3>
@@ -47,10 +47,10 @@ export default function SettingsModal() {
   const ActiveComponent = tabs.find(t => t.id === activeTab)?.component || GeneralSection
 
   return (
-    <Modal title="Settings" onClose={closeModal} size="xl">
-      <div className="flex h-[450px] -mx-4 md:-mx-6 -mb-4 md:-mb-6 border-t border-black/5 dark:border-white/5 dark:bg-[#36384F]">
-        
-        <div className="w-[140px] md:w-[180px] border-r border-black/5 dark:border-white/5 bg-black/[0.02] dark:bg-[#36384F] py-4">
+    <Modal title="Settings" onClose={closeModal} size="xl" backdropClassName="bg-black/40 backdrop-blur-none">
+      <div className="flex h-[450px] -mx-4 md:-mx-6 -mb-4 md:-mb-6 border-t border-border bg-card">
+
+        <div className="w-[140px] md:w-[180px] border-r border-border bg-muted/30 py-4">
           <nav className="space-y-1 px-2">
             {tabs.map((tab) => (
               <button
@@ -68,7 +68,7 @@ export default function SettingsModal() {
           </nav>
         </div>
 
-        
+
         <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar">
           <ActiveComponent />
         </div>

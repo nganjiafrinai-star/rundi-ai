@@ -1,8 +1,9 @@
 'use client'
 
-import { X, Clock, User, Calendar, Bookmark, Share2 } from 'lucide-react'
+import { X, Clock, User, Calendar, Bookmark, Share2, Languages } from 'lucide-react'
 import { NewsArticle } from '@/app/api/types/news.types'
 import { useEffect } from 'react'
+import { useNews } from '@/app/context/newsContext'
 
 interface ArticleModalProps {
     article: NewsArticle
@@ -25,6 +26,8 @@ export default function ArticleModal({
     allArticles,
     onArticleClick
 }: ArticleModalProps) {
+    const { newsLanguage, setNewsLanguage } = useNews()
+
     // Close modal on Escape key press
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
@@ -53,8 +56,8 @@ export default function ArticleModal({
                 aria-hidden="true"
             />
 
-            <div className="relative w-full h-full bg-white dark:bg-gray-900 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
-                <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-slate-200 dark:border-gray-700">
+            <div className="relative w-full h-full bg-background overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 bg-background/95 backdrop-blur-sm border-b border-border">
                     <div className="flex items-center gap-3">
                         <span className="px-3 py-1 bg-[#0078D4] text-white text-xs font-semibold rounded">
                             {article.category}
@@ -64,6 +67,13 @@ export default function ArticleModal({
                         </span>
                     </div>
                     <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => setNewsLanguage(newsLanguage === 'en' ? 'fr' : 'en')}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600/10 text-green-600 rounded-full text-xs font-bold transition-colors hover:bg-green-600/20 mr-2"
+                        >
+                            <Languages className="w-3.5 h-3.5" />
+                            <span className="uppercase">{newsLanguage === 'en' ? 'EN' : 'FR'}</span>
+                        </button>
                         {onFavoriteToggle && (
                             <button
                                 onClick={(e) => onFavoriteToggle(article.id, e)}
@@ -147,7 +157,7 @@ export default function ArticleModal({
                                         <article
                                             key={similarArticle.id}
                                             onClick={() => onArticleClick(similarArticle)}
-                                            className="bg-slate-50 dark:bg-gray-800/50 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group cursor-pointer border border-slate-100 dark:border-white/5"
+                                            className="bg-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group cursor-pointer border border-border"
                                         >
                                             <div className="relative h-40 overflow-hidden">
                                                 {similarArticle.image ? (

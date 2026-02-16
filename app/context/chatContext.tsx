@@ -198,9 +198,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             const filtered = prev.filter(s => s.id !== sessionId)
             return [updated, ...filtered]
         })
-        if (currentSession?.id === sessionId) {
-            setCurrentSession((prev) => (prev ? { ...prev, ...updates, updatedAt: updates.updatedAt || new Date() } : null))
-        }
+        setCurrentSession((prev) => {
+            if (!prev || prev.id !== sessionId) return prev
+            return { ...prev, ...updates, updatedAt: updates.updatedAt || new Date() }
+        })
     }
 
     const deleteSession = (sessionId: string) => {

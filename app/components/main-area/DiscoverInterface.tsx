@@ -84,7 +84,7 @@ const WeatherCard = () => {
     setLoading(true)
     setError(null)
     try {
-      const resp = await fetch(`http://192.168.1.21:8005/weather/${encodeURIComponent(city.toLowerCase())}`, {
+      const resp = await fetch(`http://192.168.1.223:8005/weather/${encodeURIComponent(city.toLowerCase())}`, {
         headers: { 'accept': 'application/json' }
       })
       if (!resp.ok) throw new Error('API Error')
@@ -180,33 +180,262 @@ const WeatherCard = () => {
     </div>
   )
 }
+type SlideKey = 'suggestions' | 'markets' | 'crypto' | 'gainers' | 'losers'
+
+interface WatchItem {
+  name: string
+  change: string
+  up: boolean
+}
+
+const WATCHLIST_SLIDES: { key: SlideKey; title: string }[] = [
+  { key: 'suggestions', title: 'Watchlist Suggestions' },
+  { key: 'markets', title: 'Markets' },
+  { key: 'crypto', title: 'Cryptocurrencies' },
+  { key: 'gainers', title: 'Market Gainers' },
+  { key: 'losers', title: 'Market Losers' },
+]
+
+const MARKET_SYMBOLS = ['AAPL', 'MSFT', 'TSLA', 'AMZN', 'NVDA', 'GOOGL'] as const
+const MAX_WATCH_ITEMS = 6
+
+const FALLBACK_TRENDS: WatchItem[] = [
+  { name: 'GPT-5 Specs', change: '+12.4%', up: true },
+  { name: 'Burundi Tech Hub', change: '+5.2%', up: true },
+  { name: 'AI Regulation', change: '-2.1%', up: false },
+  { name: 'Mining Tech', change: '+8.7%', up: true },
+]
+
 const WatchlistCard = () => {
-  const trends = [
-    { name: 'GPT-5 Specs', change: '+12.4%', up: true },
-    { name: 'Burundi Tech Hub', change: '+5.2%', up: true },
-    { name: 'AI Regulation', change: '-2.1%', up: false },
-    { name: 'Mining Tech', change: '+8.7%', up: true },
-  ]
+  const [activeSlide, setActiveSlide] = useState(0)
+  const [cache, setCache] = useState<Record<SlideKey, WatchItem[]>>({
+    suggestions: FALLBACK_TRENDS,
+    markets: [],
+    crypto: [],
+    gainers: [],
+    losers: [],
+  })
+  const [loadingMap, setLoadingMap] = useState<Record<SlideKey, boolean>>({
+    suggestions: false,
+    markets: false,
+    crypto: false,
+    gainers: false,
+    losers: false,
+  })
+  const [errorMap, setErrorMap] = useState<Record<SlideKey, string | null>>({
+    suggestions: null,
+    markets: null,
+    crypto: null,
+    gainers: null,
+    losers: null,
+  })
+
+  const currentSlide = WATCHLIST_SLIDES[activeSlide]
+  const slideItems = cache[currentSlide.key] ?? []
+  const isLoading = !!loadingMap[currentSlide.key]
+  const slideError = errorMap[currentSlide.key]
+
+  const goToSlide = (direction: 'prev' | 'next') => {
+    setActiveSlide((prev) => {
+      if (direction === 'prev') {
+        return (prev - 1 + WATCHLIST_SLIDES.length) % WATCHLIST_SLIDES.length
+      }
+      return (prev + 1) % WATCHLIST_SLIDES.length
+    })
+  }
+
+  const mapMarketItem = (symbol: string, change: number): WatchItem => ({
+    name: symbol,
+    change: `${change.toFixed(2)}%`,
+    up: change >= 0,
+  })
+
+  const fetchSlideData = React.useCallback(async (key: SlideKey) => {
+    if (key === 'suggestions') return
+
+    const setError = (target: SlideKey | SlideKey[], message: string) => {
+      const keys = Array.isArray(target) ? target : [target]
+      setErrorMap((prev) => {
+        const next = { ...prev }
+        keys.forEach((k) => {
+          next[k] = message
+        })
+        return next
+      })
+    }
+
+    if (key === 'gainers' || key === 'losers') {
+      if (loadingMap.gainers || loadingMap.losers) return
+      setLoadingMap((prev) => ({ ...prev, gainers: true, losers: true }))
+      setErrorMap((prev) => ({ ...prev, gainers: null, losers: null }))
+      try {
+        const apiKey = process.env.NEXT_PUBLIC_TWELVEDATA_KEY ?? 'cc13d8616ec044bbaf33167982fe8bad'
+        if (!apiKey) throw new Error('Missing TwelveData API key')
+        const resp = await fetch(`https://api.twelvedata.com/market_movers?apikey=${apiKey}`)
+        if (!resp.ok) throw new Error('Failed to load market movers')
+        const data = await resp.json()
+        const formatMovers = (items: any[] = []): WatchItem[] =>
+          items.slice(0, MAX_WATCH_ITEMS).map((item) => {
+            const raw = item?.percent_change ?? '0'
+            const percent = Number.parseFloat(String(raw)) || 0
+            return {
+              name: item.symbol,
+              change: `${raw}%`,
+              up: percent >= 0,
+            }
+          })
+
+        setCache((prev) => ({
+          ...prev,
+          gainers: formatMovers(data?.gainers ?? []),
+          losers: formatMovers(data?.losers ?? []),
+        }))
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to load market movers'
+        setError(['gainers', 'losers'], message)
+      } finally {
+        setLoadingMap((prev) => ({ ...prev, gainers: false, losers: false }))
+      }
+      return
+    }
+
+    if (loadingMap[key]) return
+
+    setLoadingMap((prev) => ({ ...prev, [key]: true }))
+    setErrorMap((prev) => ({ ...prev, [key]: null }))
+
+    try {
+      if (key === 'crypto') {
+        const resp = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=6&page=1&sparkline=false&price_change_percentage=24h')
+        if (!resp.ok) throw new Error('Failed to load cryptocurrencies')
+        const data = await resp.json()
+        const mapped: WatchItem[] = (Array.isArray(data) ? data : [])
+          .slice(0, MAX_WATCH_ITEMS)
+          .map((item: any) => {
+            const pct = Number(item.price_change_percentage_24h ?? 0)
+            return {
+              name: `${item.name} (${String(item.symbol ?? '').toUpperCase()})`,
+              change: `${pct.toFixed(2)}%`,
+              up: pct >= 0,
+            }
+          })
+        setCache((prev) => ({ ...prev, crypto: mapped }))
+        return
+      }
+
+      if (key === 'markets') {
+        const token = process.env.NEXT_PUBLIC_FINNHUB_KEY ?? 'd69ija9r01qm5rv42b90d69ija9r01qm5rv42b9g'
+        if (!token) throw new Error('Missing Finnhub API key')
+        const quotes = await Promise.all(
+          MARKET_SYMBOLS.map(async (symbol) => {
+            const resp = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${token}`)
+            if (!resp.ok) throw new Error('Failed to load market quotes')
+            const data = await resp.json()
+            const current = Number(data?.c ?? 0)
+            const prevClose = Number(data?.pc ?? 0)
+            const percent = prevClose ? ((current - prevClose) / prevClose) * 100 : 0
+            return mapMarketItem(symbol, percent)
+          })
+        )
+        setCache((prev) => ({ ...prev, markets: quotes.slice(0, MAX_WATCH_ITEMS) }))
+        return
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load data'
+      setError(key, message)
+    } finally {
+      setLoadingMap((prev) => ({ ...prev, [key]: false }))
+    }
+  }, [loadingMap])
+
+  React.useEffect(() => {
+    const key = WATCHLIST_SLIDES[activeSlide].key
+    if (key === 'suggestions') return
+    if (cache[key]?.length) return
+    fetchSlideData(key)
+  }, [activeSlide, cache, fetchSlideData])
+
+  const renderSkeleton = () => (
+    <div className="space-y-4">
+      {Array.from({ length: MAX_WATCH_ITEMS }).map((_, idx) => (
+        <div
+          key={idx}
+          className="flex items-center justify-between p-3 rounded-xl bg-secondary dark:bg-secondary/50 animate-pulse"
+        >
+          <div className="h-3 w-32 bg-slate-200 dark:bg-slate-700 rounded" />
+          <div className="h-3 w-12 bg-slate-200 dark:bg-slate-700 rounded" />
+        </div>
+      ))}
+    </div>
+  )
+
+  const renderList = () => (
+    <div className="space-y-4">
+      {slideItems.slice(0, MAX_WATCH_ITEMS).map((item, idx) => (
+        <div
+          key={`${item.name}-${idx}`}
+          className="flex items-center justify-between p-3 rounded-xl bg-secondary dark:bg-secondary/50 hover:bg-secondary/80 dark:hover:bg-secondary/80 transition-colors"
+        >
+          <span className="text-sm font-bold text-slate-700 dark:text-gray-300 truncate pr-3">{item.name}</span>
+          <div className={`flex items-center gap-1 text-xs font-bold ${item.up ? 'text-green-600' : 'text-red-500'}`}>
+            {item.up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+            {item.change}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-slate-100 dark:border-white/5 shadow-sm">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-card rounded-2xl p-6 border border-border shadow-sm transition-colors duration-200">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-2">
         <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <TrendingUp className="w-4 h-4 text-green-600" />
-          Watchlist Suggestions
+          {currentSlide.title}
         </h3>
-        <button className="text-xs text-green-600 font-bold hover:underline">View All</button>
-      </div>
-      <div className="space-y-4">
-        {trends.map((item, idx) => (
-          <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-gray-900/50 hover:bg-slate-100 dark:hover:bg-gray-900 transition-colors cursor-pointer">
-            <span className="text-sm font-bold text-slate-700 dark:text-gray-300">{item.name}</span>
-            <div className={`flex items-center gap-1 text-xs font-bold ${item.up ? 'text-green-600' : 'text-red-500'}`}>
-              {item.up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-              {item.change}
-            </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-slate-500 dark:text-gray-400">{activeSlide + 1}/{WATCHLIST_SLIDES.length}</span>
+          <div className="flex items-center gap-2">
+            <button
+              aria-label="Previous slide"
+              onClick={() => goToSlide('prev')}
+              className="p-1.5 rounded-full bg-secondary dark:bg-secondary text-slate-600 dark:text-gray-400 hover:text-green-600 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              aria-label="Next slide"
+              onClick={() => goToSlide('next')}
+              className="p-1.5 rounded-full bg-secondary dark:bg-secondary text-slate-600 dark:text-gray-400 hover:text-green-600 transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
-        ))}
+        </div>
+      </div>
+
+      <div className="min-h-[240px] flex flex-col justify-center">
+        {isLoading
+          ? renderSkeleton()
+          : slideError
+            ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 text-red-600 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-200 p-4 flex flex-col gap-3 text-sm">
+                <span>{slideError}</span>
+                <button
+                  onClick={() => fetchSlideData(currentSlide.key)}
+                  className="self-start px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-500"
+                >
+                  Retry
+                </button>
+              </div>
+            )
+            : slideItems.length > 0
+              ? renderList()
+              : (
+                <div className="text-sm text-slate-500 dark:text-gray-400 text-center py-8">
+                  No data available right now.
+                </div>
+              )}
       </div>
     </div>
   )
@@ -231,8 +460,8 @@ const HeadlinesSlider = ({ articles }: { articles: NewsArticle[] }) => {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm overflow-hidden flex flex-col">
-      <div className="p-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+    <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col transition-colors duration-200">
+      <div className="p-4 border-b border-border flex items-center justify-between">
         <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <Newspaper className="w-4 h-4 text-green-600" />
           Top News Headlines
@@ -240,13 +469,13 @@ const HeadlinesSlider = ({ articles }: { articles: NewsArticle[] }) => {
         <div className="flex gap-2">
           <button
             onClick={prevSlide}
-            className="p-1.5 rounded-full bg-slate-100 dark:bg-gray-900 text-slate-600 dark:text-gray-400 hover:text-green-600 transition-colors"
+            className="p-1.5 rounded-full bg-secondary dark:bg-secondary text-slate-600 dark:text-gray-400 hover:text-green-600 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={nextSlide}
-            className="p-1.5 rounded-full bg-slate-100 dark:bg-gray-900 text-slate-600 dark:text-gray-400 hover:text-green-600 transition-colors"
+            className="p-1.5 rounded-full bg-secondary dark:bg-secondary text-slate-600 dark:text-gray-400 hover:text-green-600 transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -287,7 +516,7 @@ const HeadlinesSlider = ({ articles }: { articles: NewsArticle[] }) => {
         </AnimatePresence>
       </div>
 
-      <div className="p-3 bg-slate-50 dark:bg-gray-900/30 flex justify-center gap-1.5">
+      <div className="p-3 bg-secondary dark:bg-secondary/30 flex justify-center gap-1.5">
         {topNews.map((_, idx) => (
           <div
             key={idx}
@@ -308,9 +537,11 @@ export default function DiscoverInterface() {
     error,
     activeCategory,
     searchQuery,
+    newsLanguage,
     favorites,
     setActiveCategory,
     setSearchQuery,
+    setNewsLanguage,
     toggleFavorite,
   } = useNews();
 
@@ -363,10 +594,17 @@ export default function DiscoverInterface() {
   const remainingArticles = articles.length > 7 ? articles.slice(7) : []
 
   return (
-    <div className="min-h-screen text-base bg-white dark:bg-gray-800 focus:outline-none">
+    <div className="min-h-screen text-base bg-background focus:outline-none transition-colors duration-200">
       {/* Search and Categories Header */}
-      <div className="w-full bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-white/5">
-        <div className="max-w-[1800px] mx-auto px-4 sm:px-10 py-4 space-y-4">
+      <div
+        className={[
+          'w-full border-b border-border bg-background',
+          'transition-colors duration-200',
+        ].join(' ')}
+      >
+        <div className={[
+          'max-w-[1800px] mx-auto px-4 sm:px-10 py-4 space-y-4',
+        ].join(' ')}>
           <div className="flex flex-col md:flex-row md:items-center justify-start gap-6">
             <div className="flex items-center gap-2 w-full max-w-2xl">
               <div className="relative flex-1 justify-center">

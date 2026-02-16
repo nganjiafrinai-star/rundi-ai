@@ -4,7 +4,7 @@ export const API_ENDPOINTS = {
     TRANSLATION: {
         BASE_URL: '/api/translation-proxy',
         TRANSLATE: '/translate',
-        SEARCH: '/words',
+        SEARCH: '/translate',
     },
 
 

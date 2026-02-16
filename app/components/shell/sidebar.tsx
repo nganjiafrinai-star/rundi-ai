@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { usePathname } from 'next/navigation'
 import { useChat } from '@/app/context/chatContext'
 import { useModal } from '../../context/modal/modalContext'
@@ -40,9 +41,34 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
 
   // session dots menu
   const [openDotsForId, setOpenDotsForId] = useState<string | number | null>(null)
+  const [dotsMenuPos, setDotsMenuPos] = useState({ top: 0, left: 0 })
+  const [mounted, setMounted] = useState(false)
   const dotsMenuRef = useRef<HTMLDivElement>(null)
+  const activeTriggerRef = useRef<HTMLButtonElement | null>(null)
 
   const currentPage = pathname?.split('/')[1] || 'dashboard'
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (openDotsForId === null) return
+    const updatePosition = () => {
+      if (activeTriggerRef.current) {
+        const rect = activeTriggerRef.current.getBoundingClientRect()
+        setDotsMenuPos({ top: rect.top, left: rect.right })
+      }
+    }
+    updatePosition()
+    window.addEventListener('scroll', updatePosition, true)
+    window.addEventListener('resize', updatePosition)
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true)
+      window.removeEventListener('resize', updatePosition)
+    }
+  }, [openDotsForId])
+  const FIXED_BACKEND_USER_ID = 'be4ff3ae-dc3c-49c1-b3e6-385e81d3a5dd'
 
   const filteredSessions = useMemo(() => {
     const list = (chatSessions || []).filter((s: any) => s.page === currentPage)
@@ -64,11 +90,27 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
       const storePinned = !!s.isPinned
       const localTitle = meta[String(s.id)]?.customTitle?.trim()
       const storeTitle = s.customTitle?.trim()
+      const history = Array.isArray(s?.state?.chatHistory) ? s.state.chatHistory : []
+
+      // Find the first meaningful bot message for the title
+      const firstBotMessage = history.find((m: any) => m?.sender === 'Rundi AI' && m?.text?.trim())
+      const lastBotMessage = [...history].reverse().find((m: any) => m?.sender === 'Rundi AI' && m?.text?.trim())
+
+      const botPreview = lastBotMessage
+        ? `${String(lastBotMessage.text).substring(0, 50)}${String(lastBotMessage.text).length > 50 ? '...' : ''}`
+        : String(s.preview || '').replace(/^Rundi AI:\s*/i, '')
+
+      // Priority: Custom Title -> Bot's First Message -> Default Title
+      let displayTitle = (storeTitle || localTitle || s.title) ?? s.title
+      if (!storeTitle && !localTitle && firstBotMessage) {
+        displayTitle = firstBotMessage.text.substring(0, 30) + (firstBotMessage.text.length > 30 ? '...' : '')
+      }
 
       return {
         ...s,
         __pinned: storePinned || localPinned,
-        __title: (storeTitle || localTitle || s.title) ?? s.title,
+        __title: displayTitle,
+        __preview: botPreview,
       }
     })
 
@@ -121,7 +163,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
   }, [openDotsForId])
 
   const handleNewChat = async () => {
-    const FIXED_USER_ID = 'be4ff3ae-dc3c-49c1-b3e6-385e81d3a5dd'
+    const userID = FIXED_BACKEND_USER_ID
 
     if (
       currentSession &&
@@ -138,7 +180,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_id: FIXED_USER_ID,
+          user_id: userID,
           first_message: "New session"
         })
       })
@@ -150,18 +192,15 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
       }
 
       const backendSessionId = data.session_id || data.id || data?.data?.session_id
-      if (!backendSessionId && !data.detail?.includes("No sessions found")) {
-        throw new Error("No session id found in backend response")
-      }
+      // Even if backendSessionId is null (e.g. fresh start), we proceed
 
       const newSession = createNewSession(currentPage as any)
       if (newSession) {
         updateSession(newSession.id, {
           state: {
-            ...(newSession.state || {}),
-            backendSessionId: backendSessionId || null,
             chatHistory: [],
-            selectedCategory: (t as any)[currentPage] || 'Global'
+            selectedCategory: (t as any)[currentPage] || 'Global',
+            backendSessionId: backendSessionId || null,
           }
         })
         setCurrentSession(newSession)
@@ -169,7 +208,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
 
     } catch (err: any) {
       console.error("New chat error:", err)
-      alert(err.message)
+      alert(err?.message || 'Failed to create backend session')
     }
 
     if (onMobileClose) onMobileClose()
@@ -245,7 +284,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
 
   return (
     <aside
-      className={`flex h-screen flex-col bg-slate-50 dark:bg-[#36384F] text-gray-900 dark:text-gray-100 border-r border-slate-200 dark:border-gray-800 transition-all duration-300 ${isCollapsed ? 'lg:w-16' : 'w-[280px]'
+      className={`flex h-screen flex-col bg-sidebar text-gray-900 dark:text-gray-100 border-r border-sidebar-border transition-all duration-300 ${isCollapsed ? 'lg:w-16' : 'w-[280px]'
         }`}
     >
       {/*  Mobile header */}
@@ -322,7 +361,12 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
       </div>
 
       {/* History */}
-      <div className="flex-1 overflow-y-auto px-4 py-2">
+      <div 
+        className="flex-1 overflow-y-auto px-4 py-2"
+        onScroll={() => {
+          if (isMenuOpen) setIsMenuOpen(false)
+        }}
+      >
         {!isCollapsed ? (
           <div className="space-y-1">
             <div className="px-2 py-3">
@@ -346,25 +390,35 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                       key={session.id}
                       onClick={() => handleSessionClick(session)}
                       className={`
-                        group relative flex items-center gap-3 rounded p-1 cursor-pointer transition-all duration-150
-                        ${isActive ? 'bg-[#147e4e]/10 dark:bg-[#36334F] p-2' : 'hover:bg-slate-200/50 dark:hover:bg-[#36334F]/20'}
+                        group relative flex items-center gap-3 rounded-xl p-2 cursor-pointer transition-all duration-200
+                        ${isActive ? 'bg-white dark:bg-popover border border-gray-200 dark:border-border shadow-sm' : 'hover:bg-gray-100 dark:hover:bg-sidebar-accent/70'}
                       `}
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium text-gray-900 dark:text-gray-200 truncate">{session.__title}</p>
+                          <p
+                            className={[
+                              'text-sm font-medium transition-all duration-200',
+                              'focus-visible:outline-none active:outline-none focus:ring-0 active:ring-0 outline-none border-none',
+                              isActive
+                                ? 'text-gray-900 dark:text-gray-100'
+                                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:translate-y-[-1px]',
+                            ].join(' ')}
+                          >
+                            {session.__title}
+                          </p>
 
                           {isPinned && (
                             <span
-                              className="inline-flex items-center justify-center rounded-md bg-[#147e4e]/15 text-[#147e4e] dark:bg-[#147e4e]/20"
+                              className="inline-flex items-center justify-center rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
                               title="Pinned"
                             >
-                              <Pin className="h-3.5 w-3.5 fill-[#147e4e]" />
+                              <Pin className="h-3.5 w-3.5" />
                             </span>
                           )}
                         </div>
 
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{session.preview}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{session.__preview || session.preview}</p>
                       </div>
 
                       <div className="flex flex-col items-end gap-2">
@@ -373,9 +427,10 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation()
+                            activeTriggerRef.current = e.currentTarget
                             setOpenDotsForId((prev) => (prev === session.id ? null : session.id))
                           }}
-                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-gray-200 dark:hover:bg-[#36334F] transition-opacity cursor-pointer"
+                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-gray-200 dark:hover:bg-sidebar-accent transition-opacity cursor-pointer"
                           aria-label="History actions"
                           title="Actions"
                         >
@@ -386,16 +441,20 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                           </svg>
                         </button>
 
-                        {openDotsForId === session.id && (
+                        {openDotsForId === session.id && mounted && createPortal(
                           <div
                             ref={dotsMenuRef}
-                            className="absolute right-3 top-[54px] w-52 bg-white dark:bg-[#36334F] border border-gray-200 dark:border-[#36334F] rounded shadow-lg overflow-hidden z-50"
+                            className="fixed w-52 bg-white dark:bg-popover border border-gray-200 dark:border-border rounded shadow-lg overflow-hidden z-[9999]"
+                            style={{
+                              bottom: `calc(100vh - ${dotsMenuPos.top - 4}px)`,
+                              left: `${dotsMenuPos.left - 208}px`,
+                            }}
                             onClick={(e) => e.stopPropagation()}
                           >
                             <button
                               type="button"
-                              onClick={() => onRename(session)}
-                              className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-[#36334F] text-gray-700 dark:text-gray-200"
+                              onClick={() => { onRename(session); setOpenDotsForId(null); }}
+                              className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-sidebar-accent text-gray-700 dark:text-gray-200"
                             >
                               <Pencil className="h-4 w-4" />
                               <span>{t.rename}</span>
@@ -403,8 +462,8 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
 
                             <button
                               type="button"
-                              onClick={() => onPinToggle(session)}
-                              className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-[#36334F] text-gray-700 dark:text-gray-200"
+                              onClick={() => { onPinToggle(session); setOpenDotsForId(null); }}
+                              className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-sidebar-accent text-gray-700 dark:text-gray-200"
                             >
                               {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
                               <span>{isPinned ? t.unpin : t.pin}</span>
@@ -412,8 +471,8 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
 
                             <button
                               type="button"
-                              onClick={() => onArchiver(session)}
-                              className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-[#36334F] text-gray-700 dark:text-gray-200"
+                              onClick={() => { onArchiver(session); setOpenDotsForId(null); }}
+                              className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-sidebar-accent text-gray-700 dark:text-gray-200"
                             >
                               <Archive className="h-4 w-4" />
                               <span>{t.archive}</span>
@@ -421,13 +480,14 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
 
                             <button
                               type="button"
-                              onClick={() => onDelete(session)}
+                              onClick={() => { onDelete(session); setOpenDotsForId(null); }}
                               className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/10 text-red-600 dark:text-red-400 cursor-pointer"
                             >
                               <Trash2 className="h-4 w-4" />
                               <span>{t.delete}</span>
                             </button>
-                          </div>
+                          </div>,
+                          document.body
                         )}
                       </div>
                     </div>
@@ -444,14 +504,14 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                 onClick={() => handleSessionClick(session)}
                 className={`
                   grid h-9 w-9 place-items-center rounded-lg text-sm cursor-pointer
-                  ${currentSession?.id === session.id ? 'ring-2 ring-[#147e4e]' : ''}
+                  ${currentSession?.id === session.id ? 'ring-2 ring-gray-300 dark:ring-gray-600' : ''}
                   ${session.page === 'dashboard'
-                    ? 'bg-[#147e4e]/15 dark:bg-[#147e4e]/20 text-[#147e4e]'
+                    ? 'bg-white dark:bg-popover text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-border'
                     : session.page === 'traduction'
-                      ? 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300'
+                      ? 'bg-white dark:bg-popover text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-border'
                       : session.page === 'dictionary'
-                        ? 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300'
-                        : 'bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-300'
+                        ? 'bg-white dark:bg-popover text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-border'
+                        : 'bg-white dark:bg-popover text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-border'
                   }
                 `}
                 title={session.__title || session.title}
@@ -463,13 +523,13 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
         )}
       </div>
 
-      <div className="p-4 shadow dark:border-[#36334F] relative" ref={menuRef}>
+      <div className="p-4 shadow relative" ref={menuRef}>
         {isMenuOpen && (
           <div
             className={`
               absolute bottom-full mb-2 z-50 overflow-hidden
-              bg-white dark:bg-[#36334F]
-              border border-gray-200 dark:border-[#36334F]
+              bg-white dark:bg-popover
+              border border-gray-200 dark:border-border
               rounded-lg shadow-lg
               ${isCollapsed ? 'left-14 w-56' : 'left-0 right-0 mx-4'}
             `}
@@ -477,14 +537,14 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
           >
             <button
               onClick={() => handleMenuItemClick('settings')}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-[#36334F] transition-colors text-sm text-gray-700 dark:text-gray-200 border-b border-gray-100 dark:border-[#36334F] cursor-pointer"
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-sidebar-accent transition-colors text-sm text-gray-700 dark:text-gray-200 border-b border-gray-100 dark:border-border cursor-pointer"
             >
               <span>{t.settings}</span>
             </button>
 
             <button
               onClick={() => handleMenuItemClick('download')}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-[#36334F] transition-colors text-sm text-gray-700 dark:text-gray-200 border-b border-gray-100 dark:border-[#36334F] cursor-pointer"
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-sidebar-accent transition-colors text-sm text-gray-700 dark:text-gray-200 border-b border-gray-100 dark:border-border cursor-pointer"
             >
               <span>{t.downloadApp}</span>
             </button>
@@ -506,7 +566,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
           type="button"
           onClick={() => setIsMenuOpen((v) => !v)}
           className={`
-            flex items-center gap-3 w-full text-left hover:bg-gray-50 dark:hover:bg-[#36334F] transition-colors cursor-pointer
+            flex items-center gap-3 w-full text-left hover:bg-gray-50 dark:hover:bg-sidebar-accent transition-colors cursor-pointer
             ${userProfileRadius}
             ${isCollapsed ? 'w-10 h-10 p-0 justify-center mx-auto' : 'p-2'}
           `}

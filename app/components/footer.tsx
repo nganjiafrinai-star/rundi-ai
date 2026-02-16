@@ -5,7 +5,7 @@ import "../globals.css"
 
 const Footer = () => {
     return (
-        <footer className="bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 py-12 border-t border-black/10 dark:border-white/10">
+        <footer className="bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 py-16 border-t border-gray-200 dark:border-white/10 transition-all duration-200">
             <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10">
                 <div>
                     <Link href="/dashboard" className="text-1.5xl font-bold text-[#111111] dark:text-white mb-4">RUNDI AI</Link>

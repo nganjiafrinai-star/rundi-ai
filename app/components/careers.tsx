@@ -4,7 +4,7 @@ const Careers = () => {
     return (
         <section
             id="careers"
-            className="min-h-screen bg-[#F2F2F2] dark:bg-gray-900 text-[#0F0F0F] dark:text-gray-100 py-26 px-6 sm:px-10 lg:px-24 overflow-hidden"
+            className="min-h-screen bg-background text-foreground py-26 px-6 sm:px-10 lg:px-24 overflow-hidden"
         >
             <div className="max-w-6xl mx-auto">
                 <motion.header
@@ -28,7 +28,7 @@ const Careers = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6 }}
                     viewport={{ once: true }}
-                    className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 mb-10 border border-[#E5E7EB] dark:border-[#2A2A2A]"
+                    className="bg-card rounded-2xl shadow-sm p-8 mb-10 border border-border"
                 >
                     <h2 className="text-2xl font-bold text-[#147E4E] dark:text-indigo-400 mb-4">
                         Qui sommes-nous ?
@@ -53,14 +53,14 @@ const Careers = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.1 }}
                     viewport={{ once: true }}
-                    className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm p-8 border border-[#E5E7EB] dark:border-[#2A2A2A]"
+                    className="bg-card rounded-2xl shadow-sm p-8 border border-border"
                 >
                     <h2 className="text-2xl font-bold text-[#147E4E] dark:text-indigo-400 mb-6">
                         Pourquoi nous rejoindre ?
                     </h2>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div className="bg-[#F9FAFB] dark:bg-gray-900 p-6 rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] hover:shadow-md transition-all duration-300">
+                        <div className="bg-secondary p-6 rounded-xl border border-border hover:shadow-md transition-all duration-300">
                             <h3 className="text-xl font-semibold text-pink-400 mb-3">
                                 Impact réel
                             </h3>
@@ -71,7 +71,7 @@ const Careers = () => {
                             </ul>
                         </div>
 
-                        <div className="bg-[#F9FAFB] dark:bg-gray-900 p-6 rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] hover:shadow-md transition-all duration-300">
+                        <div className="bg-secondary p-6 rounded-xl border border-border hover:shadow-md transition-all duration-300">
                             <h3 className="text-xl font-semibold text-purple-400 mb-3">
                                 Innovation continue
                             </h3>
@@ -82,7 +82,7 @@ const Careers = () => {
                             </ul>
                         </div>
 
-                        <div className="bg-[#F9FAFB] dark:bg-gray-900 p-6 rounded-xl border border-[#E5E7EB] dark:border-[#2A2A2A] hover:shadow-md transition-all duration-300">
+                        <div className="bg-secondary p-6 rounded-xl border border-border hover:shadow-md transition-all duration-300">
                             <h3 className="text-xl font-semibold text-indigo-400 mb-3">
                                 Environnement stimulant
                             </h3>

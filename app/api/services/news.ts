@@ -6,63 +6,102 @@ import type {
     NewsSearchResult,
 } from '../types/news.types'
 
+function extractArticlesFromPayload(payload: any): any[] {
+    if (!payload) return []
+    if (payload.response && Array.isArray(payload.response.results)) return payload.response.results
+    if (Array.isArray(payload)) return payload
+    if (Array.isArray(payload.articles)) return payload.articles
+    if (Array.isArray(payload.results)) return payload.results
+    if (Array.isArray(payload.items)) return payload.items
+    if (Array.isArray(payload.data?.articles)) return payload.data.articles
+    if (Array.isArray(payload.data?.results)) return payload.data.results
+    if (Array.isArray(payload.data)) return payload.data
+    return []
+}
+
+function toSafeArticleId(rawId: string, index: number): string {
+    try {
+        return btoa(unescape(encodeURIComponent(rawId)))
+            .replace(/\//g, '_')
+            .replace(/\+/g, '-')
+            .replace(/=/g, '')
+    } catch {
+        return `news-${Date.now()}-${index}`
+    }
+}
+
 export async function searchNews(
     filters: NewsSearchFilters = {}
 ): Promise<NewsSearchResult> {
-    const { category = 'all', query = '' } = filters as any
+    const { category = 'all', query = '', language = 'en' } = filters as any
 
     try {
-        const baseUrl = getEndpointUrl('DISCOVER', API_ENDPOINTS.DISCOVER.EVERYTHING)
-        const params = new URLSearchParams({
-            language: 'fr',
-            sort_by: 'publishedAt'
-        })
+        const baseUrl = "https://content.guardianapis.com/search"
+        const cleanQuery = query.trim()
+        const GUARDIAN_API_KEY = "test" // Public test key provided by Guardian documentation
 
-        if (query.trim()) {
-            params.append('q', query.trim())
-        }
+        const attempts: Record<string, string>[] = [
+            {
+                "api-key": GUARDIAN_API_KEY,
+                "show-fields": "all",
+                "lang": language,
+                ...(cleanQuery ? { q: cleanQuery } : {}),
+                ...(category !== 'all' ? { section: category } : {}),
+            },
+            {
+                "api-key": GUARDIAN_API_KEY,
+                "show-fields": "thumbnail,trailText,byline",
+                "lang": language,
+                ...(cleanQuery ? { q: cleanQuery } : {}),
+            },
+            {
+                "api-key": GUARDIAN_API_KEY,
+                "lang": language,
+            },
+        ]
 
-        if (category !== 'all') {
-            params.append('category', category)
-        }
+        let lastError: string | null = null
 
-        const response = await get<any>(`${baseUrl}?${params.toString()}`)
+        for (const paramsObj of attempts) {
+            const params = new URLSearchParams(paramsObj)
+            const requestUrl = `${baseUrl}?${params.toString()}`
 
-        if (response.data) {
-            const results = response.data.articles || response.data.results || []
+            const response = await get<any>(requestUrl)
+            if (response.error) {
+                lastError = response.error
+                continue
+            }
+
+            const results = extractArticlesFromPayload(response.data)
+            if (!results.length) {
+                continue
+            }
+
             const articles: NewsArticle[] = results.map((item: any, index: number) => {
-                const rawId = item.article_id || item.url || `${Date.now()}-${index}`;
-
-                let safeId = '';
-                try {
-                    safeId = btoa(unescape(encodeURIComponent(rawId)))
-                        .replace(/\//g, '_')
-                        .replace(/\+/g, '-')
-                        .replace(/=/g, '');
-                } catch (e) {
-                    safeId = `news-${Date.now()}-${index}`;
-                }
+                const rawId = String(item.id || item.webUrl || `${Date.now()}-${index}`)
+                const safeId = toSafeArticleId(rawId, index)
+                const fields = item.fields || {}
 
                 return {
                     id: safeId,
-                    title: item.title || 'Untitled',
-                    description: item.description || item.content?.substring(0, 200) || '',
-                    content: item.content || item.description || '',
-                    category: item.category?.[0] || category,
-                    source: item.source_id || item.source?.name || 'Unknown Source',
-                    author: item.creator?.[0] || item.author || null,
-                    date: formatDate(item.publishedAt || item.pubDate || new Date().toISOString()),
-                    readTime: calculateReadTime(item.content || item.description || ''),
-                    image: item.image_url || item.urlToImage || null,
-                    url: item.link || item.url || '#',
+                    title: item.webTitle || 'Untitled',
+                    description: fields.trailText || fields.standfirst || '',
+                    content: fields.bodyText || fields.body || '',
+                    category: item.sectionName || category,
+                    source: 'The Guardian',
+                    author: fields.byline || null,
+                    date: formatDate(item.webPublicationDate || new Date().toISOString()),
+                    readTime: calculateReadTime(fields.bodyText || fields.body || ''),
+                    image: fields.thumbnail || null,
+                    url: item.webUrl || '#',
                     featured: index === 0,
-                };
+                }
             })
 
             return { articles, total: articles.length }
         }
 
-        if (response.error) throw new Error(response.error)
+        if (lastError) throw new Error(lastError)
     } catch (error) {
         console.error('Discover API error:', error)
     }

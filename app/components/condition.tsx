@@ -3,7 +3,7 @@ const Condition = () => {
     return (
         <section
             id="condition"
-            className="min-h-screen bg-[#F2F2F2] dark:bg-gray-900 text-[#0F0F0F] dark:text-gray-100 py-26 px-6 sm:px-10 lg:px-24"
+            className="min-h-screen bg-background text-foreground py-26 px-6 sm:px-10 lg:px-24"
         >
             <div className="max-w-5xl mx-auto">
                 <header className="mb-10 text-center">
@@ -18,7 +18,7 @@ const Condition = () => {
                     </p>
                 </header>
 
-                <article className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-[#E5E7EB] dark:border-[#2A2A2A] p-6 mb-6">
+                <article className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-6">
                     <h2 className="text-xl font-semibold text-[#147E4E] dark:text-indigo-400 mb-3">
                         Droits d’accès et utilisation
                     </h2>
@@ -44,7 +44,7 @@ const Condition = () => {
                     </ul>
                 </article>
 
-                <article className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-[#E5E7EB] dark:border-[#2A2A2A] p-6 mb-6">
+                <article className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-6">
                     <h2 className="text-xl font-semibold text-[#147E4E] dark:text-indigo-400 mb-3">
                         Propriété intellectuelle
                     </h2>
@@ -56,7 +56,7 @@ const Condition = () => {
                     </p>
                 </article>
 
-                <article className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-[#E5E7EB] dark:border-[#2A2A2A] p-6 mb-6">
+                <article className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-6">
                     <h2 className="text-xl font-semibold text-[#147E4E] dark:text-indigo-400 mb-3">
                         Support et résiliation
                     </h2>
@@ -73,7 +73,7 @@ const Condition = () => {
                     </ul>
                 </article>
 
-                <article className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-[#E5E7EB] dark:border-[#2A2A2A] p-6 mb-6">
+                <article className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-6">
                     <h2 className="text-xl font-semibold text-[#147E4E] dark:text-indigo-400 mb-3">
                         Limitation de responsabilité
                     </h2>
@@ -85,7 +85,7 @@ const Condition = () => {
                     </p>
                 </article>
 
-                <article className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-[#E5E7EB] dark:border-[#2A2A2A] p-6 mb-10">
+                <article className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-10">
                     <h2 className="text-xl font-semibold text-[#147E4E] dark:text-indigo-400 mb-3">
                         Indemnisation
                     </h2>

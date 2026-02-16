@@ -14,13 +14,16 @@ import type { DictionaryEntry } from '@/app/api/types/dictionary.types'
 import Footer2 from '../footer2'
 
 type Lang = 'Français' | 'English' | 'Kirundi' | 'Swahili'
+type NonKirundiLang = Exclude<Lang, 'Kirundi'>
 
 export default function TraductionInterface() {
   const { currentSession, updateSession } = useChat()
   const { t } = useLanguage()
 
-  const [fromLang, setFromLang] = useState<Lang>('Kirundi')
-  const [toLang, setToLang] = useState<Lang>('English')
+  const [isKirundiLeft, setIsKirundiLeft] = useState(true)
+  const [otherLang, setOtherLang] = useState<NonKirundiLang>('English')
+  const fromLang: Lang = isKirundiLeft ? 'Kirundi' : otherLang
+  const toLang: Lang = isKirundiLeft ? otherLang : 'Kirundi'
   const [sourceText, setSourceText] = useState('')
   const [translatedText, setTranslatedText] = useState('')
 
@@ -37,23 +40,26 @@ export default function TraductionInterface() {
 
   const justSwapped = useRef(false)
 
-  const otherLangs = useMemo<Lang[]>(() => ['Français', 'English', 'Swahili'], [])
-  const allLangs = useMemo<Lang[]>(() => ['Kirundi', 'Français', 'English', 'Swahili'], [])
+  const otherLangs = useMemo<NonKirundiLang[]>(() => ['Français', 'English', 'Swahili'], [])
 
   useEffect(() => {
     if (currentSession?.state) {
       const s = currentSession.state
-      setFromLang(s.fromLang || 'Kirundi')
-      setToLang(s.toLang || 'English')
+      const storedFrom = (s.fromLang as Lang) || 'Kirundi'
+      const storedTo = (s.toLang as Lang) || 'English'
+      const kirundiLeft = storedFrom === 'Kirundi'
+      const candidateOther = kirundiLeft ? storedTo : storedFrom
+      setIsKirundiLeft(kirundiLeft)
+      setOtherLang(otherLangs.includes(candidateOther as NonKirundiLang) ? (candidateOther as NonKirundiLang) : 'English')
       setSourceText(s.sourceText || '')
       setTranslatedText(s.translatedText || '')
     } else {
-      setFromLang('Kirundi')
-      setToLang('English')
+      setIsKirundiLeft(true)
+      setOtherLang('English')
       setSourceText('')
       setTranslatedText('')
     }
-  }, [currentSession?.id])
+  }, [currentSession?.id, otherLangs])
 
   useEffect(() => {
     if (!currentSession) return
@@ -80,26 +86,24 @@ export default function TraductionInterface() {
   }, [fromLang, toLang, sourceText, translatedText, currentSession?.id])
 
   const ACCENT = '#147E4E' // Corrected to brand green
-  const BG_LIGHT = 'bg-white'
-  const BG_DARK = 'dark:bg-gray-800'
-  const SURFACE_LIGHT = 'bg-white'
-  const SURFACE_DARK = 'dark:bg-[#36384F]'
-  const BORDER = 'border border-gray-100 dark:border-gray-800'
-  const TEXT = 'text-slate-900 dark:text-gray-100'
-  const MUTED = 'text-slate-500 dark:text-gray-400'
-  const MUTED2 = 'text-slate-400 dark:text-gray-500'
-  const SOFT = 'bg-gray-50/50 dark:bg-gray-800'
-  const SOFT2 = 'bg-gray-100/50 dark:bg-gray-800/10'
+  const BG_LIGHT = 'bg-background'
+  const BG_DARK = 'dark:bg-gray-900'
+  const SURFACE_LIGHT = 'bg-card'
+  const SURFACE_DARK = ''
+  const BORDER = 'border border-border'
+  const TEXT = 'text-foreground'
+  const MUTED = 'text-muted-foreground'
+  const MUTED2 = 'text-muted-foreground/80'
+  const SOFT = 'bg-secondary'
+  const SOFT2 = 'bg-secondary/50'
 
 
 
   const swap = () => {
     const tempText = sourceText
-    const tempLang = fromLang
     setSourceText(translatedText)
     setTranslatedText(tempText)
-    setFromLang(toLang)
-    setToLang(tempLang)
+    setIsKirundiLeft((prev) => !prev)
     setTranslateError(null)
     justSwapped.current = true
   }
@@ -151,7 +155,8 @@ export default function TraductionInterface() {
       setIsSearchingSuggestions(true)
       try {
         const results = await searchTranslationWords(sourceText, 10)
-        const mappedResults: DictionaryEntry[] = results.map((raw: any, index: number) => ({
+        const safeResults = Array.isArray(results) ? results : []
+        const mappedResults: DictionaryEntry[] = safeResults.map((raw: any, index: number) => ({
           id: raw.id || index,
           word: raw.ijambo || raw.word || '',
           meaning: raw.insiguro || raw.meaning || '',
@@ -236,28 +241,23 @@ export default function TraductionInterface() {
         <div className={`rounded ${BORDER} ${SURFACE_LIGHT} ${SURFACE_DARK} shadow-sm p-4`}>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
-              <select
-                value={fromLang}
-                onChange={(e: ChangeEvent<HTMLSelectElement>) => {
-                  const val = e.target.value as Lang
-                  setFromLang(val)
-                  if (val === 'Kirundi') {
-                    if (toLang === 'Kirundi') setToLang('English')
-                  } else {
-                    setToLang('Kirundi')
-                  }
-                }}
-                className={`px-3 py-2 text-sm rounded outline-none ${SOFT} ${TEXT} font-medium border border-transparent focus:border-[#147E4E] transition-all`}
-              >
-                {allLangs.map((l) => {
-                  if (toLang !== 'Kirundi' && l !== 'Kirundi') return null
-                  return (
+              {isKirundiLeft ? (
+                <div className={`px-3 py-2 text-sm rounded select-none ${SOFT} ${TEXT} font-medium border border-transparent`}>
+                  Kirundi
+                </div>
+              ) : (
+                <select
+                  value={otherLang}
+                  onChange={(e: ChangeEvent<HTMLSelectElement>) => setOtherLang(e.target.value as NonKirundiLang)}
+                  className={`px-3 py-2 text-sm rounded outline-none ${SOFT} ${TEXT} font-medium border border-transparent focus:border-[#147E4E] transition-all`}
+                >
+                  {otherLangs.map((l) => (
                     <option key={l} value={l}>
                       {l}
                     </option>
-                  )
-                })}
-              </select>
+                  ))}
+                </select>
+              )}
 
               <button
                 onClick={swap}
@@ -267,29 +267,25 @@ export default function TraductionInterface() {
                 <ArrowLeftRight className={`w-4 h-4 ${TEXT}`} />
               </button>
 
-              <select
-                value={toLang}
-                onChange={(e: ChangeEvent<HTMLSelectElement>) => {
-                  const val = e.target.value as Lang
-                  setToLang(val)
-                  if (val === 'Kirundi') {
-                    if (fromLang === 'Kirundi') setFromLang('English')
-                  } else {
-                    setFromLang('Kirundi')
-                  }
-                }}
-                className={`px-3 py-2 text-sm rounded outline-none ${SOFT} ${TEXT} font-medium border border-transparent focus:border-[#147E4E] transition-all`}
-              >
-                {allLangs.map((l) => {
-                  if (fromLang !== 'Kirundi' && l !== 'Kirundi') return null
-                  return (
+              {isKirundiLeft ? (
+                <select
+                  value={otherLang}
+                  onChange={(e: ChangeEvent<HTMLSelectElement>) => setOtherLang(e.target.value as NonKirundiLang)}
+                  className={`px-3 py-2 text-sm rounded outline-none ${SOFT} ${TEXT} font-medium border border-transparent focus:border-[#147E4E] transition-all`}
+                >
+                  {otherLangs.map((l) => (
                     <option key={l} value={l}>
                       {l}
                     </option>
-                  )
-                })}
-              </select>
+                  ))}
+                </select>
+              ) : (
+                <div className={`px-3 py-2 text-sm rounded select-none ${SOFT} ${TEXT} font-medium border border-transparent`}>
+                  Kirundi
+                </div>
+              )}
             </div>
+
 
             {isTranslating && (
               <div className="flex items-center gap-2 text-xs text-[#147E4E] animate-pulse">

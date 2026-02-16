@@ -133,112 +133,137 @@ const InputArea = ({
   setIsAttachmentOpen,
   attachmentRef,
   onFileUpload,
-}: InputAreaProps) => (
-  <div className={`p-2 sm:p-4 ${className}`}>
-    <div
-      className="mx-auto max-w-[90%] relative rounded
-        border dark:border-[#147E4E]-1
-        bg-white dark:bg-[#36384F] shadow-sm transition-all w-full"
-    >
-      <textarea
-        ref={textareaRef}
-        value={input}
-        onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setInput(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        className="w-full resize-none p-3 pr-12 sm:pr-28 pb-10 sm:pb-9
-            text-slate-900 dark:text-gray-100 focus:outline-none min-h-[60px] sm:min-h-[80px] text-sm"
-      />
+}: InputAreaProps) => {
 
-      <div className="absolute left-2 sm:left-3 bottom-2 sm:bottom-3" ref={categoryRef}>
-        <button
-          type="button"
-          onClick={() => setIsCategoryOpen((v) => !v)}
-          className="flex items-center gap-1.5 sm:gap-2 rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs
-            bg-slate-50 dark:bg-black
-            text-slate-900 dark:text-gray-100
-            border border-slate-200 dark:border-gray-800 cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-        >
-          <span className="truncate max-w-[80px] sm:max-w-none">{selectedCategory}</span>
-          <ChevronDown className={`h-3.5 w-3.5 sm:h-4 sm:w-4 transition ${isCategoryOpen ? 'rotate-180' : ''}`} />
-        </button>
+  // Auto-resize logic
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      const scrollHeight = textareaRef.current.scrollHeight
+      const maxHeight = 200
+      textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`
+      textareaRef.current.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden'
+    }
+  }, [input, textareaRef])
 
-        {isCategoryOpen && (
-          <div
-            className="absolute bottom-full mb-2 w-40 rounded-xl overflow-hidden
-            bg-white dark:bg-black/90
-            border border-slate-200 dark:border-gray-800 shadow-lg z-50 animate-in fade-in zoom-in-95 duration-200"
-          >
-            {categories.map((c) => (
+  return (
+    <div className={`p-2 sm:p-4 ${className}`}>
+      <div
+        className="mx-auto max-w-[90%] relative rounded-2xl
+          border border-gray-200 dark:border-[#147E4E]/20
+          bg-card shadow-md dark:shadow-none 
+          focus-within:ring-2 focus-within:ring-green-500/30 dark:focus-within:ring-0
+          transition-all duration-200 w-full flex flex-col"
+      >
+        <textarea
+          ref={textareaRef}
+          value={input}
+          onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          rows={1}
+          className="w-full resize-none bg-transparent p-3 sm:p-4 rounded-t-2xl
+              text-slate-900 dark:text-gray-100 focus:outline-none min-h-[50px] max-h-[200px] text-sm custom-scrollbar"
+        />
+
+        {/* Toolbar Section */}
+        <div className="flex items-center justify-between px-2 pb-2 sm:px-3 sm:pb-3 mt-1">
+          {/* Left: Category Selector */}
+          <div className="relative" ref={categoryRef}>
+            <button
+              type="button"
+              onClick={() => setIsCategoryOpen((v) => !v)}
+              className="flex items-center gap-1.5 sm:gap-2 rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs
+                bg-slate-50 dark:bg-black/20
+                text-slate-900 dark:text-gray-100
+                border border-slate-200 dark:border-white/10 cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+            >
+              <span className="truncate max-w-[80px] sm:max-w-[120px] font-medium">{selectedCategory}</span>
+              <ChevronDown className={`h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {isCategoryOpen && (
+              <div
+                className="absolute bottom-full left-0 mb-2 w-48 rounded-xl overflow-hidden
+                bg-white dark:bg-[#2A2B3D]
+                border border-slate-200 dark:border-white/10 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200"
+              >
+                <div className="max-h-[200px] overflow-y-auto custom-scrollbar p-1">
+                  {categories.map((c) => (
+                    <button
+                      type="button"
+                      key={c}
+                      onClick={() => {
+                        setSelectedCategory(c)
+                        setIsCategoryOpen(false)
+                      }}
+                      className={`block w-full px-3 py-2 text-left text-xs rounded-lg cursor-pointer transition-colors
+                        ${selectedCategory === c
+                          ? 'bg-[#147E4E]/10 text-[#147E4E] font-medium dark:text-[#147E4E]'
+                          : 'text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5'
+                        }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            <div className="relative" ref={attachmentRef}>
               <button
                 type="button"
-                key={c}
-                onClick={() => {
-                  setSelectedCategory(c)
-                  setIsCategoryOpen(false)
-                }}
-                className={`block w-full px-4 py-2 text-left text-xs cursor-pointer
-                  ${selectedCategory === c
-                    ? 'bg-[#147E4E]/10 text-white'
-                    : 'hover:bg-slate-50 dark:hover:bg-gray-700'
-                  }`}
+                onClick={() => setIsAttachmentOpen((v) => !v)}
+                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer transition-colors"
+                title="Attach file"
               >
-                {c}
+                <Paperclip className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
-            ))}
-          </div>
-        )}
-      </div>
 
-      <div className="absolute right-2 sm:right-3 bottom-2 sm:bottom-3 flex items-center gap-1 sm:gap-2">
-        <div className="relative" ref={attachmentRef}>
-          <button
-            type="button"
-            onClick={() => setIsAttachmentOpen((v) => !v)}
-            className="rounded-xl p-1.5 sm:p-2 text-slate-500 hover:bg-slate-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
-          >
-            <Paperclip className="h-4 w-4 sm:h-5 sm:w-5" />
-          </button>
-
-          {isAttachmentOpen && (
-            <div className="absolute bottom-full right-0 mb-2 w-48 rounded-xl bg-white dark:bg-[#36384F] border border-slate-200 dark:border-gray-700 shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2">
-              <button
-                onClick={() => {
-                  onFileUpload()
-                  setIsAttachmentOpen(false)
-                }}
-                className="w-full flex items-center gap-3 px-4 py-2 sm:py-3 text-xs sm:text-sm text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-blue-600">
-                  <Paperclip className="h-4 w-4" />
+              {isAttachmentOpen && (
+                <div className="absolute bottom-full right-0 mb-2 w-48 rounded-xl bg-white dark:bg-[#2A2B3D] border border-slate-200 dark:border-white/10 shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2 p-1">
+                  <button
+                    onClick={() => {
+                      onFileUpload()
+                      setIsAttachmentOpen(false)
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2 text-xs sm:text-sm text-slate-700 dark:text-gray-200 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                  >
+                    <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md text-blue-600">
+                      <Paperclip className="h-3.5 w-3.5" />
+                    </div>
+                    <span>Document</span>
+                  </button>
                 </div>
-                <span>Document</span>
-              </button>
+              )}
             </div>
-          )}
+
+            <button
+              type="button"
+              onClick={sendMessage}
+              disabled={!input.trim() || loading || isTyping}
+              className={`rounded-xl p-2 text-white transition-all cursor-pointer shadow-sm
+                ${input.trim() && !loading && !isTyping
+                  ? 'bg-[#147E4E] hover:bg-[#116A41] active:scale-95'
+                  : 'bg-gray-300 dark:bg-gray-700 cursor-not-allowed opacity-50'
+                }`}
+            >
+              <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+            </button>
+          </div>
         </div>
-
-        <button
-          type="button"
-          onClick={sendMessage}
-          disabled={!input.trim() || loading || isTyping}
-          className={`rounded-xl p-1.5 sm:p-2 text-white transition cursor-pointer
-            ${input.trim() && !loading && !isTyping
-              ? 'bg-[#1565c0] hover:bg-[#1565c0] hover:opacity-50'
-              : 'bg-[#1565c0]/40 cursor-not-allowed opacity-50'
-            }`}
-        >
-          <Send className="h-4 w-4 sm:h-5 sm:w-5" />
-        </button>
       </div>
-    </div>
 
-    <Footer2 />
-  </div>
-)
+      <Footer2 />
+    </div>
+  )
+}
 
 export default function ChatBoxInterface() {
-  const { currentSession, updateSession } = useChat()
+  const { currentSession, updateSession, createNewSession, activePage } = useChat()
   const { t } = useLanguage()
 
   const chatCategories = [t.global, t.healthChat, t.breeding, t.commerce, t.agriculture]
@@ -266,10 +291,10 @@ export default function ChatBoxInterface() {
 
   const [isAttachmentOpen, setIsAttachmentOpen] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
+  const FIXED_BACKEND_USER_ID = 'be4ff3ae-dc3c-49c1-b3e6-385e81d3a5dd'
 
   // Deduplication and Lock Refs
   const sendLock = useRef(false)
-  const sentFingerprints = useRef<Map<string, Set<string>>>(new Map())
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
@@ -280,7 +305,6 @@ export default function ChatBoxInterface() {
   }, [chatHistory, loading, editingMessageId])
 
   useEffect(() => {
-    // Reset UI state on session change
     setInput('')
     setLoading(false)
     setIsTyping(false)
@@ -307,20 +331,29 @@ export default function ChatBoxInterface() {
   }, [currentSession?.id])
 
   useEffect(() => {
+    if (chatHistory.length > 0 && showWelcome) {
+      setShowWelcome(false)
+    }
+  }, [chatHistory.length, showWelcome])
+
+  useEffect(() => {
     if (!currentSession) return
 
     const timer = setTimeout(() => {
       const bId = currentSession?.state?.backendSessionId
       const state = { chatHistory, selectedCategory, backendSessionId: bId }
-      const lastMsg = chatHistory[chatHistory.length - 1]
+      const lastBotMsg = [...chatHistory].reverse().find((msg) => msg.sender === 'Rundi AI' && msg.text?.trim())
 
-      const title = lastMsg
-        ? lastMsg.text.length > 25
-          ? lastMsg.text.substring(0, 25) + '...'
-          : lastMsg.text
+      const title = lastBotMsg
+        ? lastBotMsg.text.length > 25
+          ? lastBotMsg.text.substring(0, 25) + '...'
+          : lastBotMsg.text
         : `Chat: ${selectedCategory}`
 
-      const preview = lastMsg ? lastMsg.text.substring(0, 50) : 'New conversation'
+      const botPreviewText = lastBotMsg
+        ? lastBotMsg.text.substring(0, 50) + (lastBotMsg.text.length > 50 ? '...' : '')
+        : 'Waiting for Rundi AI response...'
+      const preview = `Rundi AI: ${botPreviewText}`
 
       if (currentSession.title !== title || JSON.stringify(currentSession.state) !== JSON.stringify(state)) {
         updateSession(currentSession.id, {
@@ -347,34 +380,78 @@ export default function ChatBoxInterface() {
 
   const [copiedId, setCopiedId] = useState<number | null>(null)
 
-  const copyToClipboard = (text: string, id: number) => {
-    navigator.clipboard.writeText(text)
-    setCopiedId(id)
-    setTimeout(() => setCopiedId(null), 2000)
+  const copyToClipboardFallback = (text: string) => {
+    try {
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      textArea.setAttribute('readonly', '')
+      textArea.style.position = 'fixed'
+      textArea.style.top = '0'
+      textArea.style.left = '0'
+      textArea.style.opacity = '0'
+      textArea.style.pointerEvents = 'none'
+
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      textArea.setSelectionRange(0, text.length)
+
+      const copied = document.execCommand('copy')
+      document.body.removeChild(textArea)
+      return copied
+    } catch {
+      return false
+    }
+  }
+
+  const copyToClipboard = async (text: string, id: number): Promise<boolean> => {
+    let copied = false
+
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(text)
+        copied = true
+      } catch {
+        copied = false
+      }
+    }
+
+    if (!copied) {
+      copied = copyToClipboardFallback(text)
+    }
+
+    if (copied) {
+      setCopiedId(id)
+      setTimeout(() => setCopiedId(null), 2000)
+    } else {
+      console.warn('Copy to clipboard failed on this device/browser')
+    }
+
+    return copied
   }
 
   const handleShare = async (msg: ChatMsg) => {
+    const shareData = {
+      title: 'Rundi AI Message',
+      text: msg.text,
+    }
+
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: 'Rundi AI Message',
-          text: msg.text,
-          url: window.location.href,
-        })
-      } else {
-        await navigator.clipboard.writeText(msg.text)
-        setCopiedId(msg.id)
-        setTimeout(() => setCopiedId(null), 2000)
+      if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
+        await navigator.share(shareData)
+        return
+      }
+
+      const copied = await copyToClipboard(msg.text, msg.id)
+      if (!copied) {
+        window.prompt('Copy this message:', msg.text)
       }
     } catch (err) {
-      if (err instanceof Error && err.name !== 'AbortError') {
-        try {
-          await navigator.clipboard.writeText(msg.text)
-          setCopiedId(msg.id)
-          setTimeout(() => setCopiedId(null), 2000)
-        } catch {
-          console.error('Failed to copy')
-        }
+      if (err instanceof Error && err.name === 'AbortError') return
+
+      const copied = await copyToClipboard(msg.text, msg.id)
+      if (!copied) {
+        window.prompt('Copy this message:', msg.text)
       }
     }
   }
@@ -414,26 +491,18 @@ export default function ChatBoxInterface() {
 
   const sendMessage = async (overrideText?: string) => {
     const text = typeof overrideText === 'string' ? overrideText.trim() : input.trim()
-    if (!text || loading || isTyping || !currentSession) return
+    if (!text || loading || isTyping) return
 
-    // 1. Send Lock and Deduplication
+    const session = currentSession ?? createNewSession(activePage)
+    if (!session) return
+
     if (sendLock.current) return
-
-    const sessionId = currentSession.id
-    const fingerprint = text.toLowerCase()
-
-    if (!sentFingerprints.current.has(sessionId)) {
-      sentFingerprints.current.set(sessionId, new Set())
-    }
-
-    if (sentFingerprints.current.get(sessionId)?.has(fingerprint)) {
-      console.warn('Duplicate message detected. Ignoring.')
-      return
-    }
 
     sendLock.current = true
 
     if (showWelcome) setShowWelcome(false)
+
+    const userID = FIXED_BACKEND_USER_ID
 
     const userChat: ChatMsg = {
       id: Date.now(),
@@ -443,47 +512,66 @@ export default function ChatBoxInterface() {
       category: selectedCategory,
     }
 
-    setChatHistory((prev) => [...prev, userChat])
+    setChatHistory((prev) => {
+      const next = [...prev, userChat]
+      updateSession(session.id, {
+        state: {
+          ...(session.state || {}),
+          chatHistory: next,
+          selectedCategory,
+          backendSessionId: session?.state?.backendSessionId || null,
+        },
+        updatedAt: new Date(),
+      })
+      return next
+    })
     setInput('')
     setLoading(true)
 
-    const FIXED_USER_ID = 'be4ff3ae-dc3c-49c1-b3e6-385e81d3a5dd'
     const { domain, category } = getCategoryMetadata(selectedCategory, t)
 
-    let currentBackendId = currentSession?.state?.backendSessionId
+    let currentBackendId = session?.state?.backendSessionId
 
     try {
       if (!currentBackendId) {
-        // Fallback: Create backend session automatically
-        const sessionRes = await fetch("/api/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const sessionRes = await fetch('/api/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            user_id: FIXED_USER_ID,
-            first_message: text
-          })
+            user_id: userID,
+            first_message: text,
+          }),
         })
 
-        const sessionData = await sessionRes.json()
-        if (!sessionRes.ok) throw new Error(sessionData.error || "Failed to create backend session")
-
-        currentBackendId = sessionData.session_id || sessionData.id || sessionData.data?.session_id
-        if (currentBackendId) {
-          updateSession(currentSession!.id, {
-            state: { ...(currentSession!.state || {}), backendSessionId: currentBackendId }
-          })
-        } else {
-          throw new Error("Backend did not return a session_id")
+        const sessionData = await sessionRes.json().catch(() => ({}))
+        if (!sessionRes.ok) {
+          throw new Error(sessionData.error || `Failed to create backend session: ${sessionRes.status}`)
         }
+
+        currentBackendId = sessionData.session_id || sessionData.id || sessionData?.data?.session_id || null
+
+        if (!currentBackendId) {
+          throw new Error('Backend did not return a session id')
+        }
+
+        updateSession(session.id, {
+          state: {
+            ...(session.state || {}),
+            chatHistory: session.state?.chatHistory || [],
+            selectedCategory,
+            backendSessionId: currentBackendId,
+          },
+          updatedAt: new Date(),
+        })
       }
 
-      // 2. Send message to backend
+
       const payload = {
         message: text,
         domain: domain,
         category: category,
         language: "rn",
-        user_id: FIXED_USER_ID,
+        user_id: userID,
         session_id: currentBackendId
       }
 
@@ -515,12 +603,21 @@ export default function ChatBoxInterface() {
         category: selectedCategory,
       }
 
-      // Add to fingerprints after successful send
-      sentFingerprints.current.get(sessionId)?.add(fingerprint)
-
       setIsTyping(true)
       setActiveBotId(botChatId)
-      setChatHistory((prev) => [...prev, botChat])
+      setChatHistory((prev) => {
+        const next = [...prev, botChat]
+        updateSession(session.id, {
+          state: {
+            ...(session.state || {}),
+            chatHistory: next,
+            selectedCategory,
+            backendSessionId: currentBackendId || null,
+          },
+          updatedAt: new Date(),
+        })
+        return next
+      })
     } catch (err: any) {
       const botChat: ChatMsg = {
         id: Date.now() + 1,
@@ -529,7 +626,19 @@ export default function ChatBoxInterface() {
         timestamp: nowTime(),
         category: selectedCategory,
       }
-      setChatHistory((prev) => [...prev, botChat])
+      setChatHistory((prev) => {
+        const next = [...prev, botChat]
+        updateSession(session.id, {
+          state: {
+            ...(session.state || {}),
+            chatHistory: next,
+            selectedCategory,
+            backendSessionId: currentBackendId || null,
+          },
+          updatedAt: new Date(),
+        })
+        return next
+      })
     } finally {
       setLoading(false)
       sendLock.current = false
@@ -548,17 +657,17 @@ export default function ChatBoxInterface() {
   }
 
   return (
-    <div className="flex-1 h-[calc(100vh-3.5rem)] flex flex-col bg-white dark:bg-black">
+    <div className="flex-1 h-[calc(100vh-3.5rem)] flex flex-col bg-gray-900">
       {showWelcome ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 bg-gradient-to-b from-transparent to-black/[0.02] dark:to-white/[0.02]">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 bg-black">
           <div className="w-full max-w-3xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="text-center space-y-4 sm:space-y-6">
-              <div className="mx-auto flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl sm:rounded-3xl bg-[#36384F] shadow-lg shadow-[#147E4E]/20">
+            <div className="text-center space-y-6 sm:space-y-8">
+              <div className="mx-auto flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl sm:rounded-3xl bg-background shadow-lg shadow-[#147E4E]/20 dark:shadow-none transition-transform duration-200 hover:scale-105">
                 <Bot className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
               </div>
-              <div className="space-y-2">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 dark:text-gray-100 tracking-tight">{t.welcome}</h1>
-                <p className="text-base sm:text-lg md:text-xl text-slate-600 dark:text-gray-400">{t.subtitle}</p>
+              <div className="space-y-3">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">{t.welcome}</h1>
+                <p className="text-base sm:text-lg md:text-xl text-gray-500 dark:text-gray-400 tracking-normal leading-relaxed max-w-2xl mx-auto">{t.subtitle}</p>
               </div>
             </div>
             <InputArea
@@ -588,19 +697,19 @@ export default function ChatBoxInterface() {
         <>
           <input type="file" ref={fileInputRef} onChange={onFileChange} className="hidden" />
 
-          <div className="flex-1 overflow-y-auto px-2 sm:px-4 md:px-6 pt-2 sm:pt-3 pb-4 sm:pb-6 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto px-2 sm:px-4 md:px-6 pt-2 sm:pt-3 pb-4 sm:pb-6 custom-scrollbar bg-black">
             <div className="mx-auto max-w-3xl flex flex-col gap-2 sm:gap-3 md:gap-4">
               {chatHistory.map((msg) => (
                 <div key={msg.id} className={`flex w-full ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] md:max-w-[75%] lg:max-w-[65%] ${msg.sender === 'Rundi AI' ? 'w-full' : ''}`}>
                     <div
-                      className={`rounded-2xl text-sm  ${msg.sender === 'user'
-                        ? 'bg-[#1565C0] text-white px-4 py-3 shadow-sm w-fit px-4 py-2 rounded-lg break-words'
+                      className={`rounded-2xl text-sm ${msg.sender === 'user'
+                        ? 'bg-[#1565C0] text-white px-4 py-2 shadow-sm w-fit break-words ml-auto'
                         : 'bg-transparent text-slate-900 dark:text-gray-100 px-0 py-1'
                         }`}
                     >
                       {editingMessageId === msg.id ? (
-                        <div className="w-full bg-white dark:bg-[#36384F] border border-slate-200 dark:border-[#147E4E]/30 rounded-2xl shadow-lg ring-1 ring-black/5 p-2 sm:p-3 transition-all animate-in fade-in zoom-in-95 duration-200">
+                        <div className="w-full bg-card border border-slate-200 dark:border-[#147E4E]/30 rounded-2xl shadow-lg ring-1 ring-black/5 p-2 sm:p-3 transition-all animate-in fade-in zoom-in-95 duration-200">
                           <textarea
                             value={editedMessageContent}
                             onChange={(e) => setEditedMessageContent(e.target.value)}

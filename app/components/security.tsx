@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 
 const Security = () => {
     return (
-        <section id="security" className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#F2F2F2] dark:bg-gray-900 text-[#0F0F0F] dark:text-white px-6 py-20">
+        <section id="security" className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-background text-foreground px-6 py-20">
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-10 left-10 w-24 h-24 bg-indigo-500/20 rounded-full blur-3xl animate-pulse"></div>
                 <div className="absolute bottom-16 right-16 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-200"></div>
@@ -51,8 +51,8 @@ const Security = () => {
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, delay: index * 0.2 }}
                             viewport={{ once: true }}
-                            className="bg-white dark:bg-gray-900/60 border border-gray-800 rounded-2xl p-8 shadow-xl backdrop-blur-md hover:border-indigo-500/60 hover:shadow-indigo-500/20 transition-all duration-500"
-                            >
+                            className="bg-card border border-border rounded-2xl p-8 shadow-xl backdrop-blur-md hover:border-indigo-500/60 hover:shadow-indigo-500/20 transition-all duration-500"
+                        >
                             <h3 className="text-2xl font-semibold mb-4 text-indigo-400">
                                 {item.title}
                             </h3>

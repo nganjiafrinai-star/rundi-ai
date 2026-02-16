@@ -122,17 +122,17 @@ export default function DictionaryInterface() {
 
   const [sharedOk, setSharedOk] = useState(false)
 
-  const ACCENT = '#28C766' // CustomVert
-  const BG_LIGHT = 'bg-white' // CustomLightGray
-  const BG_DARK = 'dark:bg-gray-800' // CustomBlack
-  const SURFACE_LIGHT = 'bg-white' // CustomWhite
-  const SURFACE_DARK = 'dark:bg-[#36384F]'
-  const BORDER = 'border border-gray-100 dark:border-white/10'
-  const TEXT = 'text-slate-900 dark:text-white'
-  const MUTED = 'text-slate-500 dark:text-white/65'
-  const MUTED2 = 'text-slate-400 dark:text-white/50'
-  const SOFT = 'bg-gray-50/50 dark:bg-gray-800'
-  const SOFT2 = 'bg-black/[0.05] dark:bg-gray-800/10'
+  const ACCENT = '#28C766' 
+  const BG_LIGHT = 'bg-background' 
+  const BG_DARK = 'dark:bg-gray-900' 
+  const SURFACE_LIGHT = 'bg-card' 
+  const SURFACE_DARK = ''
+  const BORDER = 'border border-border'
+  const TEXT = 'text-foreground'
+  const MUTED = 'text-muted-foreground'
+  const MUTED2 = 'text-muted-foreground/80'
+  const SOFT = 'bg-secondary'
+  const SOFT2 = 'bg-secondary/50'
   const SELECTED_ROW = 'bg-green-100 dark:bg-[#143e24]' // green tint
   const SELECTED_PILL = 'bg-green-100 text-[#0F3D22] dark:bg-[#143e24] dark:text-[#BFF3D2]'
 

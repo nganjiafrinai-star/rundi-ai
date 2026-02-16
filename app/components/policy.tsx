@@ -3,7 +3,7 @@ const Politic = () => {
     return (
         <section
             id="politic"
-            className="min-h-screen bg-[#F2F2F2] dark:bg-gray-900 text-[#0F0F0F] dark:text-gray-100 py-26 px-6 sm:px-10 lg:px-24"
+            className="min-h-screen bg-background text-foreground py-26 px-6 sm:px-10 lg:px-24"
         >
             <div className="max-w-5xl mx-auto">
                 <header className="mb-10 text-center">
@@ -18,7 +18,7 @@ const Politic = () => {
                     </p>
                 </header>
 
-                <article className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-[#E5E7EB] dark:border-[#2A2A2A] p-6 mb-6">
+                <article className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-6">
                     <h2 className="text-xl font-semibold text-indigo-300 mb-3">
                         Collecte et utilisation des données
                     </h2>
@@ -36,7 +36,7 @@ const Politic = () => {
                     </ul>
                 </article>
 
-                <article className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-[#E5E7EB] dark:border-[#2A2A2A] p-6 mb-6">
+                <article className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-6">
                     <h2 className="text-xl font-semibold text-indigo-300 mb-3">
                         Partage et accès aux données
                     </h2>
@@ -52,7 +52,7 @@ const Politic = () => {
                     </ul>
                 </article>
 
-                <article className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-[#E5E7EB] dark:border-[#2A2A2A] p-6 mb-6">
+                <article className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-6">
                     <h2 className="text-xl font-semibold text-indigo-300 mb-3">
                         Sécurité et durée de conservation
                     </h2>
@@ -70,7 +70,7 @@ const Politic = () => {
                     </ul>
                 </article>
 
-                <article className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-[#E5E7EB] dark:border-[#2A2A2A] p-6 mb-10">
+                <article className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-10">
                     <h2 className="text-xl font-semibold text-indigo-300 mb-3">
                         Droits des utilisateurs
                     </h2>

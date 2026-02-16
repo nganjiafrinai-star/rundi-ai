@@ -10,9 +10,11 @@ interface NewsContextType {
     error: string | null;
     activeCategory: string;
     searchQuery: string;
+    newsLanguage: string;
     favorites: string[];
     setActiveCategory: (category: string) => void;
     setSearchQuery: (query: string) => void;
+    setNewsLanguage: (lang: string) => void;
     toggleFavorite: (id: string) => void;
     fetchNews: (force?: boolean) => Promise<void>;
     getArticleById: (id: string) => Promise<NewsArticle | undefined>;
@@ -26,10 +28,11 @@ export const NewsProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [error, setError] = useState<string | null>(null);
     const [activeCategory, setActiveCategory] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
+    const [newsLanguage, setNewsLanguage] = useState('en');
     const [favorites, setFavorites] = useState<string[]>([]);
 
     // Use a ref to track if we've already fetched for the current state to avoid redundant calls
-    const lastFetchParams = useRef({ category: '', query: '' });
+    const lastFetchParams = useRef({ category: '', query: '', language: 'en' });
     const isInitialMount = useRef(true);
 
     // Load favorites from localStorage
@@ -56,6 +59,7 @@ export const NewsProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!force &&
             lastFetchParams.current.category === activeCategory &&
             lastFetchParams.current.query === searchQuery &&
+            lastFetchParams.current.language === newsLanguage &&
             articles.length > 0) {
             return;
         }
@@ -64,14 +68,14 @@ export const NewsProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setError(null);
         try {
             if (activeCategory === 'favorites') {
-                const result = await searchNews({ category: 'all', query: searchQuery });
+                const result = await searchNews({ category: 'all', query: searchQuery, language: newsLanguage });
                 const favoritedArticles = result.articles.filter(art => favorites.includes(art.id));
                 setArticles(favoritedArticles);
             } else {
-                const result = await searchNews({ category: activeCategory as any, query: searchQuery });
+                const result = await searchNews({ category: activeCategory as any, query: searchQuery, language: newsLanguage });
                 setArticles(result.articles);
             }
-            lastFetchParams.current = { category: activeCategory, query: searchQuery };
+            lastFetchParams.current = { category: activeCategory, query: searchQuery, language: newsLanguage };
         } catch (err) {
             setError('Failed to load news. Please try again later.');
             console.error('Error fetching news:', err);
@@ -88,7 +92,7 @@ export const NewsProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }, searchQuery ? 500 : 0);
 
         return () => clearTimeout(timer);
-    }, [activeCategory, searchQuery, fetchNews]);
+    }, [activeCategory, searchQuery, newsLanguage, fetchNews]);
 
     const toggleFavorite = (id: string) => {
         setFavorites(prev =>
@@ -131,9 +135,11 @@ export const NewsProvider: React.FC<{ children: React.ReactNode }> = ({ children
             error,
             activeCategory,
             searchQuery,
+            newsLanguage,
             favorites,
             setActiveCategory,
             setSearchQuery,
+            setNewsLanguage,
             toggleFavorite,
             fetchNews,
             getArticleById

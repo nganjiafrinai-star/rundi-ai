@@ -78,7 +78,7 @@ const FAQ = () => {
     return (
         <section
             id="faq"
-            className="min-h-screen bg-[#F2F2F2] dark:bg-gray-900 text-[#0F0F0F] dark:text-gray-100 py-26 px-6 sm:px-10 lg:px-24"
+            className="min-h-screen bg-background text-foreground py-26 px-6 sm:px-10 lg:px-24"
         >
             <div className="max-w-5xl mx-auto">
                 <motion.header
@@ -104,8 +104,8 @@ const FAQ = () => {
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6, delay: index * 0.05 }}
                             viewport={{ once: true }}
-                            className="bg-white dark:bg-gray-800 border border-gray-700 rounded-2xl shadow-sm p-6 hover:shadow-md transition-all duration-300"
-                            >
+                            className="bg-card border border-border rounded-2xl shadow-sm p-6 hover:shadow-md transition-all duration-300"
+                        >
                             <h2 className="text-lg sm:text-xl font-semibold text-indigo-400 mb-2">
                                 {faq.question}
                             </h2>

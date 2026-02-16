@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { useAuth } from '@/app/context/authContext'
+import { signIn } from 'next-auth/react'
 
 function RundiLogo() {
   return (
@@ -19,9 +20,9 @@ function EyeIcon({ open }: { open: boolean }) {
   const { theme } = useTheme()
 
   return (
-    <svg 
-      width="20" 
-      height="20" 
+    <svg
+      width="20"
+      height="20"
       viewBox="0 0 24 24"
       className={theme === 'dark' ? 'text-gray-400' : 'text-black/60'}
     >
@@ -37,6 +38,46 @@ function EyeIcon({ open }: { open: boolean }) {
   )
 }
 
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+      <path
+        fill="#FFC107"
+        d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.7 1.1 7.8 3l5.7-5.7C34.8 6 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.1-.1-2.3-.4-3.5Z"
+      />
+      <path
+        fill="#FF3D00"
+        d="M6.3 14.7 12.9 19.5C14.7 15 19 12 24 12c3 0 5.7 1.1 7.8 3l5.7-5.7C34.8 6 29.6 4 24 4c-7.7 0-14.4 4.3-17.7 10.7Z"
+      />
+      <path
+        fill="#4CAF50"
+        d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.3C29.2 35 26.7 36 24 36c-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9.3 39.7 16.1 44 24 44Z"
+      />
+      <path
+        fill="#1976D2"
+        d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.4 4.1-4.6 5.3l6.3 5.3C35.5 40 44 36 44 24c0-1.1-.1-2.3-.4-3.5Z"
+      />
+    </svg>
+  )
+}
+
+function WhatsAppIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="text-green-500"
+    >
+      <path
+        fill="currentColor"
+        d="M20.52 3.48A11.9 11.9 0 0 0 12.05 0C5.5 0 .16 5.35.16 11.9c0 2.1.55 4.15 1.6 5.96L0 24l6.3-1.65a11.9 11.9 0 0 0 5.75 1.46h.01c6.55 0 11.9-5.35 11.9-11.9 0-3.18-1.24-6.16-3.44-8.43ZM12.06 21.5h-.01a9.6 9.6 0 0 1-4.9-1.34l-.35-.21-3.74.98 1-3.64-.23-.37a9.55 9.55 0 0 1-1.47-5.05c0-5.29 4.3-9.6 9.6-9.6 2.56 0 4.96 1 6.77 2.82a9.5 9.5 0 0 1 2.8 6.78c0 5.29-4.3 9.6-9.6 9.6Zm5.27-7.2c-.29-.14-1.7-.84-1.96-.93-.26-.1-.45-.14-.64.14-.19.29-.74.93-.9 1.12-.17.19-.33.21-.62.07-.29-.14-1.22-.45-2.32-1.43-.86-.76-1.44-1.7-1.6-1.99-.17-.29-.02-.45.12-.6.13-.13.29-.33.43-.5.14-.17.19-.29.29-.48.1-.19.05-.36-.02-.5-.07-.14-.64-1.54-.88-2.1-.23-.55-.47-.48-.64-.49h-.55c-.19 0-.5.07-.76.36-.26.29-1 1-.1 2.45.9 1.45 2.1 2.85 3.6 3.99 1.5 1.14 2.07 1.25 2.82 1.39.75.14 1.43.12 1.96.07.6-.06 1.7-.7 1.94-1.38.24-.69.24-1.28.17-1.38-.07-.1-.26-.17-.55-.31Z"
+      />
+    </svg>
+  )
+}
+
 export default function RegisterPage() {
   const [showPw, setShowPw] = useState(false)
   const [showPw2, setShowPw2] = useState(false)
@@ -44,27 +85,29 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
-  const { login } = useAuth()
+  const [isLoading, setIsLoading] = useState(false)
+  const { register } = useAuth()
 
-  const handleRegister = () => {
-    setError('')
-    if (!email.trim()) {
-      setError('Injiza imeri yanyu')
-      return
+  const handleRegister = async () => {
+    setError('Registration is disabled. Use admin@nova.io / admin123 to log in.')
+  }
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsLoading(true)
+      await signIn('google', { callbackUrl: '/' })
+    } catch (err) {
+      setError('Failed to sign in with Google')
+      setIsLoading(false)
     }
-    if (!password.trim()) {
-      setError('Injize kabanga nshasha')
-      return
-    }
-    if (password !== confirmPassword) {
-      setError('Kabanga ntizihuye')
-      return
-    }
-    login(email)
+  }
+
+  const handleWhatsAppSignIn = async () => {
+    setError('WhatsApp authentication coming soon!')
   }
 
   return (
-    <div className="min-h-screen dark:bg-[#36384F] transition-colors duration-300">
+    <div className="min-h-screen bg-background transition-colors duration-300">
       <div className="mx-auto flex min-h-screen max-w-[520px] flex-col items-center px-6">
         <div className="pt-10" />
         <RundiLogo />
@@ -146,9 +189,10 @@ export default function RegisterPage() {
           <button
             type="button"
             onClick={handleRegister}
-            className="mt-5 w-full rounded  dark:bg-[#147e4e] py-4 text-[15px] font-medium text-white hover:brightness-110 active:brightness-95 transition-all"
+            disabled={isLoading}
+            className="mt-5 w-full rounded  dark:bg-[#147e4e] py-4 text-[15px] font-medium text-white hover:brightness-110 active:brightness-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Iyandikishe
+            {isLoading ? 'Loading...' : 'Iyandikishe'}
           </button>
 
           <div className="mt-4 text-center">
@@ -158,6 +202,29 @@ export default function RegisterPage() {
             >
               Injire
             </Link>
+          </div>
+
+          <div className="mt-6 flex items-center justify-center gap-4">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={isLoading}
+                className="grid h-12 w-12 place-items-center rounded-full border border-black/10 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm hover:bg-black/5 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                aria-label="Continue with Google"
+              >
+                <GoogleIcon />
+              </button>
+              <button
+                type="button"
+                onClick={handleWhatsAppSignIn}
+                disabled={isLoading}
+                className="grid h-12 w-12 place-items-center rounded-full border border-black/10 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm hover:bg-black/5 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                aria-label="Continue with WhatsApp"
+              >
+                <WhatsAppIcon />
+              </button>
+            </div>
           </div>
         </div>
 

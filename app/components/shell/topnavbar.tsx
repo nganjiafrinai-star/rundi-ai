@@ -33,8 +33,8 @@ export default function TopNav({ onMenuClick, isMobile = false }: TopNavProps) {
     <header
       className="
         sticky top-0 z-20
-        bg-white dark:bg-[#36384F]
-        border-b border-slate-200 dark:border-gray-800
+        bg-background
+        border-b border-border
         transition-colors
       "
     >
@@ -71,11 +71,11 @@ export default function TopNav({ onMenuClick, isMobile = false }: TopNavProps) {
                   key={item.id}
                   href={item.path}
                   className={[
-                    'text-sm font-medium transition-colors',
+                    'text-sm font-medium transition-all duration-200',
                     'focus-visible:outline-none active:outline-none focus:ring-0 active:ring-0 outline-none border-none',
                     isActive
                       ? 'text-[#147E4E]'
-                      : 'text-slate-600 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white',
+                      : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:translate-y-[-1px]',
                   ].join(' ')}
                 >
                   {item.name}

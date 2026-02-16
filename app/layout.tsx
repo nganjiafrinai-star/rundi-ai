@@ -2,6 +2,7 @@
 
 import { useState, Suspense, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
+import { SessionProvider } from 'next-auth/react'
 import { ChatProvider } from '@/app/context/chatContext'
 import { AuthProvider, useAuth } from '@/app/context/authContext'
 import { ModalProvider } from '@/app/context/modal/modalContext'
@@ -49,7 +50,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
 
     if (isLoading || (!isAuthenticated && !isPublicPage)) {
         return (
-            <div className="flex h-screen items-center justify-center bg-white dark:bg-gray-900">
+            <div className="flex h-screen items-center justify-center bg-background">
                 <div className="w-12 h-12 border-4 border-green-500/20 border-t-green-500 rounded-full animate-spin" />
             </div>
         )
@@ -60,7 +61,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <div className="flex h-screen bg-white dark:bg-gray-900 text-foreground overflow-hidden">
+        <div className="flex h-screen bg-background text-foreground overflow-hidden">
             {mobileSidebarOpen && (
                 <div
                     className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -105,7 +106,7 @@ export default function RootLayout({
     children: React.ReactNode
 }) {
     return (
-        <html lang="rn">
+        <html lang="rn" suppressHydrationWarning>
             <body>
                 <Suspense fallback={<div>Loading...</div>}>
                     <ThemeProvider
@@ -115,15 +116,17 @@ export default function RootLayout({
                         disableTransitionOnChange
                     >
                         <LanguageProvider>
-                            <AuthProvider>
-                                <ChatProvider>
-                                    <NewsProvider>
-                                        <ModalProvider>
-                                            <AppContent>{children}</AppContent>
-                                        </ModalProvider>
-                                    </NewsProvider>
-                                </ChatProvider>
-                            </AuthProvider>
+                            <SessionProvider>
+                                <AuthProvider>
+                                    <ChatProvider>
+                                        <NewsProvider>
+                                            <ModalProvider>
+                                                <AppContent>{children}</AppContent>
+                                            </ModalProvider>
+                                        </NewsProvider>
+                                    </ChatProvider>
+                                </AuthProvider>
+                            </SessionProvider>
                         </LanguageProvider>
                     </ThemeProvider>
                 </Suspense>
