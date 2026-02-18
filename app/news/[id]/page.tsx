@@ -32,7 +32,7 @@ export default function NewsDetailPage() {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
                 <div className="w-12 h-12 border-4 border-green-600 border-t-transparent rounded-full animate-spin mb-4" />
-                <p className="text-gray-600 dark:text-gray-400">Amakuru ariko arashakwa...</p>
+                <p className="text-muted-foreground dark:text-gray-400">Amakuru ariko arashakwa...</p>
             </div>
         )
     }
@@ -41,7 +41,7 @@ export default function NewsDetailPage() {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center">
                 <h2 className="text-2xl font-bold mb-4">Amakuru ntiyabonetse</h2>
-                <p className="text-gray-600 dark:text-gray-400 mb-8">Ntabwo dushoboye kubona aya makuru kuko dushobora kuba twataye aho yari ari.</p>
+                <p className="text-muted-foreground dark:text-gray-400 mb-8">Ntabwo dushoboye kubona aya makuru kuko dushobora kuba twataye aho yari ari.</p>
                 <button
                     onClick={() => router.push('/news')}
                     className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors"
@@ -84,13 +84,13 @@ export default function NewsDetailPage() {
         >
             <button
                 onClick={() => router.back()}
-                className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-500 mb-8 transition-colors group"
+                className="flex items-center gap-2 text-muted-foreground dark:text-gray-400 hover:text-green-600 dark:hover:text-green-500 mb-8 transition-colors group"
             >
                 <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
                 <span className="font-medium">Inyuma</span>
             </button>
 
-            <article className="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-white/5">
+            <article className="bg-card dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm border border-border dark:border-white/5">
                 {article.image && (
                     <div className="relative h-[300px] sm:h-[450px] w-full">
                         <img
@@ -102,7 +102,7 @@ export default function NewsDetailPage() {
                 )}
 
                 <div className="p-6 sm:p-10">
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-6">
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground dark:text-gray-400 mb-6">
                         <span className="px-3 py-1 bg-green-600/10 text-green-600 rounded-full font-bold uppercase text-[10px] tracking-wider">
                             {article.category}
                         </span>
@@ -122,26 +122,26 @@ export default function NewsDetailPage() {
                         )}
                     </div>
 
-                    <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
+                    <h1 className="text-3xl sm:text-4xl font-bold text-foreground dark:text-white mb-6 leading-tight">
                         {article.title}
                     </h1>
 
-                    <div className="flex items-center justify-between py-6 border-y border-gray-100 dark:border-white/5 mb-8">
+                    <div className="flex items-center justify-between py-6 border-y border-border dark:border-white/5 mb-8">
                         <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                                Ahakuwe: <span className="text-green-600">{article.source}</span>
+                            <span className="text-sm font-bold text-muted-foreground dark:text-gray-300">
+                                Source: <span className="text-green-600">{article.source}</span>
                             </span>
                         </div>
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => toggleFavorite(article.id)}
-                                className={`p-2.5 rounded-full transition-all border ${isFavorite ? 'bg-green-600 border-green-600 text-white shadow-lg scale-110' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-green-600 hover:text-green-600'}`}
+                                className={`p-2.5 rounded-full transition-all border ${isFavorite ? 'bg-green-600 border-green-600 text-white shadow-lg scale-110' : 'bg-muted dark:bg-gray-800 border-border dark:border-white/10 text-muted-foreground dark:text-gray-400 hover:border-green-600 hover:text-green-600'}`}
                             >
                                 <Bookmark className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
                             </button>
                             <button
                                 onClick={handleShare}
-                                className="p-2.5 rounded-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-green-600 hover:text-green-600 transition-all shadow-sm"
+                                className="p-2.5 rounded-full bg-muted dark:bg-gray-800 border border-border dark:border-white/10 text-muted-foreground dark:text-gray-400 hover:border-green-600 hover:text-green-600 transition-all shadow-sm"
                             >
                                 <Share2 className="w-5 h-5" />
                             </button>
@@ -149,7 +149,7 @@ export default function NewsDetailPage() {
                     </div>
 
                     <div className="prose prose-lg dark:prose-invert max-w-none">
-                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg whitespace-pre-wrap">
+                        <p className="text-muted-foreground dark:text-gray-300 leading-relaxed text-lg whitespace-pre-wrap">
                             {article.content}
                         </p>
                     </div>
@@ -158,7 +158,7 @@ export default function NewsDetailPage() {
 
             {/* Similar News Section */}
             <div className="mt-16">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 flex items-center gap-3">
+                <h2 className="text-2xl font-bold text-foreground dark:text-white mb-8 flex items-center gap-3">
                     <div className="w-1.5 h-8 bg-green-600 rounded-full" />
                     Izindi nkuru zishobora kugushimisha
                 </h2>
@@ -170,7 +170,7 @@ export default function NewsDetailPage() {
                             <Link
                                 key={item.id}
                                 href={`/news/${item.id}`}
-                                className="group bg-white dark:bg-gray-900 rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-white/5 hover:shadow-md transition-all flex flex-col h-full"
+                                className="group bg-card dark:bg-gray-900 rounded-xl overflow-hidden shadow-sm border border-border dark:border-white/5 hover:shadow-md transition-all flex flex-col h-full"
                             >
                                 <div className="relative h-48 w-full overflow-hidden">
                                     {item.image ? (
@@ -191,10 +191,10 @@ export default function NewsDetailPage() {
                                     </div>
                                 </div>
                                 <div className="p-5 flex-grow">
-                                    <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-green-600 transition-colors line-clamp-2 mb-3 leading-snug">
+                                    <h3 className="font-bold text-foreground dark:text-white group-hover:text-green-600 transition-colors line-clamp-2 mb-3 leading-snug">
                                         {item.title}
                                     </h3>
-                                    <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+                                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground dark:text-gray-400">
                                         <span className="font-bold text-green-600">{item.source}</span>
                                         <span>•</span>
                                         <span>{item.date}</span>

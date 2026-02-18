@@ -62,7 +62,7 @@ export default function ArticleModal({
                         <span className="px-3 py-1 bg-[#0078D4] text-white text-xs font-semibold rounded">
                             {article.category}
                         </span>
-                        <span className="text-sm text-slate-500 dark:text-gray-400">
+                        <span className="text-sm text-muted-foreground dark:text-gray-400">
                             {article.source}
                         </span>
                     </div>
@@ -114,11 +114,11 @@ export default function ArticleModal({
                     )}
 
                     <div className="max-w-4xl mx-auto px-6 py-8 md:px-12 md:py-12">
-                        <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-gray-100 mb-4 leading-tight">
-                            {article.title}
+                        <h1 className="text-3xl md:text-4xl font-bold text-foreground dark:text-gray-100 mb-4 leading-tight">
+                          {article.title}
                         </h1>
 
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-gray-400 mb-6 pb-6 border-b border-slate-200 dark:border-gray-700">
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground dark:text-gray-400 mb-6 pb-6 border-b border-border dark:border-gray-700">
                             {article.author && (
                                 <div className="flex items-center gap-2">
                                     <User className="w-4 h-4" />
@@ -146,7 +146,7 @@ export default function ArticleModal({
                         </div>
 
                         <div className="mt-16 space-y-8">
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white border-l-4 border-green-600 pl-4">
+                            <h2 className="text-2xl font-bold text-foreground dark:text-white border-l-4 border-green-600 pl-4">
                                 Amakuru yandi nk&apos;aya
                             </h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -174,7 +174,7 @@ export default function ArticleModal({
                                                 <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-green-600 transition-colors">
                                                     {similarArticle.title}
                                                 </h3>
-                                                <div className="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
+                                                <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-medium">
                                                     <span className="text-green-600 uppercase">{similarArticle.source}</span>
                                                     <span>•</span>
                                                     <span>{similarArticle.date}</span>

@@ -334,7 +334,7 @@ export default function VerbsInterface() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             <div className="flex-1 flex items-center gap-2">
               <div className="relative flex-1">
-                <Search className="w-4 h-4  text-black/45 dark:text-white/50 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2" />
                 <input
                   value={inputValue}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => {
@@ -351,11 +351,11 @@ export default function VerbsInterface() {
                   }}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                   placeholder={t.search}
-                  className="w-full pl-9 pr-3 py-2.5 text-sm  text-slate-900 dark:text-white focus:outline-none"
+                  className="w-full pl-11 pr-4 py-2 bg-input border border-border rounded text-sm text-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-all"
                 />
 
                 {suggestions.length > 0 && showSuggestions && (
-                  <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-card border border-border rounded-lg shadow-lg overflow-hidden">
+                  <div className="absolute top-full left-0 right-0 z-10 mt-2 bg-card border border-border rounded shadow-lg overflow-hidden">
                     {suggestions.map((s) => (
                       <button
                         key={s.id}
@@ -365,23 +365,23 @@ export default function VerbsInterface() {
                           handleSearchSubmit(s.infinitive)
                           setShowSuggestions(false)
                         }}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border-b border-black/5 dark:border-white/5 last:border-0"
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-muted dark:hover:bg-gray-700 text-foreground dark:text-white border-b border-border/5 dark:border-white/5 last:border-0"
                       >
                         <div className="font-semibold">{s.infinitive}</div>
-                        <div className="text-xs text-gray-500 truncate">{s.meaning}</div>
+                        <div className="text-xs text-muted-foreground truncate">{s.meaning}</div>
                       </button>
                     ))}
                   </div>
                 )}
               </div>
-              <span className="text-sm  text-slate-900 dark:text-white focus:outline-none">
+              <span className="text-white dark:text-white">
                 Kirundi
               </span>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               {showResults && (
-                <div className="text-xs text-gray-500 dark:text-gray-400 px-2">{filtered.length} results</div>
+                <div className="text-xs text-muted-foreground dark:text-gray-400 px-2">{filtered.length} results</div>
               )}
             </div>
           </div>
@@ -510,7 +510,7 @@ export default function VerbsInterface() {
                           onClick={() => setTense(t.key)}
                           className={`px-3 py-2 text-xs rounded-xl border transition ${tense === t.key
                             ? 'border-[#147E4E] bg-[#147E4E]/10 dark:bg-[#147E4E]/20 text-[#147E4E]'
-                            : 'border-gray-200 dark:border-[#2A2A2A] bg-white dark:bg-[#1A1A1A] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#2A2A2A]'
+                            : 'border-border dark:border-[#2A2A2A] bg-card dark:bg-[#1A1A1A] text-foreground dark:text-gray-200 hover:bg-muted dark:hover:bg-[#2A2A2A]'
                             }`}
                         >
                           {t.label}
@@ -520,15 +520,15 @@ export default function VerbsInterface() {
                   </div>
 
                   <div className="p-4">
-                    <div className="rounded-2xl border border-gray-200 dark:border-[#2A2A2A] bg-[#FAFAFA] dark:bg-[#2A2A2A] overflow-hidden">
-                      <div className="px-4 py-3 border-b border-gray-200 dark:border-[#2A2A2A] flex items-center justify-between">
-                        <div className="text-xs font-semibold text-gray-700 dark:text-gray-200">
+                    <div className="rounded-2xl border border-border dark:border-[#2A2A2A] bg-muted dark:bg-[#2A2A2A] overflow-hidden">
+                      <div className="px-4 py-3 border-b border-border dark:border-[#2A2A2A] flex items-center justify-between">
+                        <div className="text-xs font-semibold text-foreground dark:text-gray-200">
                           {currentTable?.label ?? t.conjugaison}
                         </div>
 
                         <button
                           onClick={() => selected && copyText(sharePayload, 'table')}
-                          className="px-3 py-1.5 text-xs rounded-xl border border-gray-200 dark:border-[#2A2A2A] bg-white dark:bg-[#1A1A1A] text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#2A2A2A] transition inline-flex items-center gap-2"
+                          className="px-3 py-1.5 text-xs rounded-xl border border-border dark:border-[#2A2A2A] bg-card dark:bg-[#1A1A1A] text-foreground dark:text-gray-200 hover:bg-muted dark:hover:bg-[#2A2A2A] transition inline-flex items-center gap-2"
                           title={t.copyTense}
                           disabled={!selected}
                         >
@@ -537,11 +537,11 @@ export default function VerbsInterface() {
                         </button>
                       </div>
 
-                      <div className="divide-y divide-gray-200 dark:divide-[#2A2A2A]">
+                      <div className="divide-y divide-border dark:divide-[#2A2A2A]">
                         {(currentTable?.rows ?? []).map((r, idx) => (
                           <div key={idx} className="grid grid-cols-[140px_1fr] gap-3 px-4 py-3">
-                            <div className="text-xs text-gray-600 dark:text-gray-300">{r.person}</div>
-                            <div className="text-sm font-semibold text-gray-900 dark:text-white">{r.form}</div>
+                            <div className="text-xs text-muted-foreground dark:text-gray-300">{r.person}</div>
+                            <div className="text-sm font-semibold text-foreground dark:text-white">{r.form}</div>
                           </div>
                         ))}
                       </div>

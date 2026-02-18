@@ -87,7 +87,7 @@ export default function TraductionInterface() {
 
   const ACCENT = '#147E4E' // Corrected to brand green
   const BG_LIGHT = 'bg-background'
-  const BG_DARK = 'dark:bg-gray-900'
+  const BG_DARK = ''
   const SURFACE_LIGHT = 'bg-card'
   const SURFACE_DARK = ''
   const BORDER = 'border border-border'
@@ -143,7 +143,6 @@ export default function TraductionInterface() {
     return () => clearTimeout(timer)
   }, [sourceText, toLang, fromLang])
 
-  // Fetch suggestions when sourceText changes (only if fromLang is Kirundi)
   useEffect(() => {
     if (fromLang !== 'Kirundi' || !sourceText.trim() || sourceText.length < 2) {
       setSuggestions([])
@@ -242,14 +241,14 @@ export default function TraductionInterface() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               {isKirundiLeft ? (
-                <div className={`px-3 py-2 text-sm rounded select-none ${SOFT} ${TEXT} font-medium border border-transparent`}>
+                <div className={`px-4 py-2 text-sm rounded select-none ${SOFT} ${TEXT} font-medium border border-border shadow-sm`}>
                   Kirundi
                 </div>
               ) : (
                 <select
                   value={otherLang}
                   onChange={(e: ChangeEvent<HTMLSelectElement>) => setOtherLang(e.target.value as NonKirundiLang)}
-                  className={`px-3 py-2 text-sm rounded outline-none ${SOFT} ${TEXT} font-medium border border-transparent focus:border-[#147E4E] transition-all`}
+                  className={`px-4 py-2 text-sm rounded outline-none bg-input border border-border ${TEXT} font-medium hover:bg-input-hover focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-all cursor-pointer`}
                 >
                   {otherLangs.map((l) => (
                     <option key={l} value={l}>
@@ -261,7 +260,7 @@ export default function TraductionInterface() {
 
               <button
                 onClick={swap}
-                className={`p-2 rounded hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition cursor-pointer`}
+                className={`p-2.5 rounded hover:bg-muted dark:hover:bg-white/[0.06] transition cursor-pointer border border-border bg-card shadow-sm`}
                 title="Swap languages"
               >
                 <ArrowLeftRight className={`w-4 h-4 ${TEXT}`} />
@@ -271,7 +270,7 @@ export default function TraductionInterface() {
                 <select
                   value={otherLang}
                   onChange={(e: ChangeEvent<HTMLSelectElement>) => setOtherLang(e.target.value as NonKirundiLang)}
-                  className={`px-3 py-2 text-sm rounded outline-none ${SOFT} ${TEXT} font-medium border border-transparent focus:border-[#147E4E] transition-all`}
+                  className={`px-4 py-2 text-sm rounded outline-none bg-input border border-border ${TEXT} font-medium hover:bg-input-hover focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-all cursor-pointer`}
                 >
                   {otherLangs.map((l) => (
                     <option key={l} value={l}>
@@ -280,7 +279,7 @@ export default function TraductionInterface() {
                   ))}
                 </select>
               ) : (
-                <div className={`px-3 py-2 text-sm rounded select-none ${SOFT} ${TEXT} font-medium border border-transparent`}>
+                <div className={`px-4 py-2 text-sm rounded select-none ${SOFT} ${TEXT} font-medium border border-border shadow-sm`}>
                   Kirundi
                 </div>
               )}
@@ -351,14 +350,15 @@ export default function TraductionInterface() {
                 }}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 placeholder={t.placeholder}
-                className={`w-full h-[220px] resize-none rounded-2xl p-4 outline-none ${SOFT} ${BORDER} ${TEXT}
-                  placeholder:text-black/35 dark:placeholder:text-white/35`}
+                className={`w-full h-[220px] resize-none rounded-2xl p-4 outline-none 
+                  bg-input border border-border ${TEXT} transition-all
+                  placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background`}
                 maxLength={4000}
               />
 
               {showSuggestions && suggestions.length > 0 && fromLang === 'Kirundi' && (
-                <div className="absolute top-14 left-4 right-4 z-50 bg-white dark:bg-gray-800 border border-black/10 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                  <div className="px-3 py-1.5 bg-gray-50 dark:bg-gray-700/50 border-b border-black/5 dark:border-white/5 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                <div className="absolute top-14 left-4 right-4 z-50 bg-card dark:bg-gray-800 border border-border/10 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                  <div className="px-3 py-1.5 bg-muted dark:bg-gray-700/50 border-b border-border/5 dark:border-white/5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground dark:text-gray-500">
                     Suggestions
                   </div>
                   <div className="max-h-[200px] overflow-y-auto no-scrollbar">
@@ -370,10 +370,10 @@ export default function TraductionInterface() {
                           setSourceText(s.word)
                           setShowSuggestions(false)
                         }}
-                        className="w-full text-left px-4 py-2.5 text-sm hover:bg-green-50 dark:hover:bg-green-900/10 text-gray-900 dark:text-white border-b border-black/5 dark:border-white/5 last:border-0 transition-colors flex flex-col gap-0.5"
+                        className="w-full text-left px-4 py-2.5 text-sm hover:bg-accent/10 dark:hover:bg-green-900/10 text-foreground dark:text-white border-b border-border/5 dark:border-white/5 last:border-0 transition-colors flex flex-col gap-0.5"
                       >
-                        <div className="font-semibold text-[#147E4E] dark:text-green-400">{s.word}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate italic">{s.meaning}</div>
+                        <div className="font-semibold text-accent dark:text-green-400">{s.word}</div>
+                        <div className="text-xs text-muted-foreground dark:text-gray-400 truncate italic">{s.meaning}</div>
                       </button>
                     ))}
                   </div>
@@ -422,12 +422,12 @@ export default function TraductionInterface() {
             </div>
 
             <div className="p-4">
-              <div className={`w-full min-h-[220px] rounded p-4 ${SOFT} ${BORDER}`}>
+              <div className={`w-full min-h-[220px] rounded-2xl p-4 bg-muted border border-border transition-colors`}>
                 {translatedText.trim() ? (
                   <p className={`text-sm whitespace-pre-line leading-relaxed ${TEXT}`}>{translatedText}</p>
                 ) : (
-                  <div className={`h-[220px] flex items-center justify-center text-sm ${MUTED}`}>
-                    {isTranslating ? 'Translating...' : 'Translation will appear here…'}
+                  <div className={`h-[188px] flex items-center justify-center text-sm ${MUTED} italic`}>
+                    {isTranslating ? 'Translating...' : 'Izoboneka hano…'}
                   </div>
                 )}
               </div>

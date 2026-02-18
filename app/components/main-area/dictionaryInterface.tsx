@@ -6,11 +6,9 @@ import {
   SlidersHorizontal,
   Star,
   StarOff,
-  Volume2,
   Copy,
   ArrowRight,
   Check,
-  X,
   Share2,
 } from 'lucide-react'
 import { DictionaryListSkeleton, DictionaryDetailSkeleton } from './SkeletonCard'
@@ -25,9 +23,7 @@ export default function DictionaryInterface() {
   const { currentSession, updateSession } = useChat()
   const { t } = useLanguage()
   const [query, setQuery] = useState('')
-  const [language, setLanguage] = useState<'Kirundi' | 'Français' | 'English'>(
-    'Kirundi'
-  )
+  const [language, setLanguage] = useState<'Kirundi' | 'Français' | 'English'>('Kirundi')
   const [posFilter, setPosFilter] = useState<'all' | DictionaryEntry['pos']>('all')
   const [onlyFavorites, setOnlyFavorites] = useState(false)
   const [selectedId, setSelectedId] = useState<number>(1)
@@ -50,7 +46,6 @@ export default function DictionaryInterface() {
       setOnlyFavorites(!!s.onlyFavorites)
       setSelectedId(s.selectedId || 1)
     } else {
-      // Reset for new session
       setQuery('')
       setLanguage('Kirundi')
       setPosFilter('all')
@@ -65,13 +60,8 @@ export default function DictionaryInterface() {
 
     const timer = setTimeout(() => {
       const state = { query, language, posFilter, onlyFavorites, selectedId }
-      const title = query.trim()
-        ? `Search: ${query}`
-        : `Dictionary (${language})`
-
-      const preview = query.trim()
-        ? `Searching for "${query}"`
-        : 'Dictionary search'
+      const title = query.trim() ? `Search: ${query}` : `Dictionary (${language})`
+      const preview = query.trim() ? `Searching for "${query}"` : 'Dictionary search'
 
       if (
         currentSession.title !== title ||
@@ -87,12 +77,8 @@ export default function DictionaryInterface() {
   // Fetch data from API
   useEffect(() => {
     const fetchData = async () => {
-      // Show "searching" popup only if it's not the initial load
-      if (data.length > 0) {
-        setSearching(true)
-      } else {
-        setLoading(true)
-      }
+      if (data.length > 0) setSearching(true)
+      else setLoading(true)
 
       setError(null)
       try {
@@ -109,32 +95,24 @@ export default function DictionaryInterface() {
 
     const timer = setTimeout(() => {
       fetchData()
-    }, query ? 400 : 0) // Debounce API calls if searching
+    }, query ? 400 : 0)
 
     return () => clearTimeout(timer)
   }, [query])
 
   const [copied, setCopied] = useState<'word' | 'definition' | null>(null)
-
-  const [speechSupported, setSpeechSupported] = useState(false)
-  const [isSpeaking, setIsSpeaking] = useState(false)
-  const [speechError, setSpeechError] = useState<string | null>(null)
-
   const [sharedOk, setSharedOk] = useState(false)
 
-  const ACCENT = '#28C766' 
-  const BG_LIGHT = 'bg-background' 
-  const BG_DARK = 'dark:bg-gray-900' 
-  const SURFACE_LIGHT = 'bg-card' 
-  const SURFACE_DARK = ''
+  const BG_LIGHT = 'bg-background'
+  const SURFACE_LIGHT = 'bg-card'
   const BORDER = 'border border-border'
   const TEXT = 'text-foreground'
   const MUTED = 'text-muted-foreground'
   const MUTED2 = 'text-muted-foreground/80'
   const SOFT = 'bg-secondary'
-  const SOFT2 = 'bg-secondary/50'
-  const SELECTED_ROW = 'bg-green-100 dark:bg-[#143e24]' // green tint
-  const SELECTED_PILL = 'bg-green-100 text-[#0F3D22] dark:bg-[#143e24] dark:text-[#BFF3D2]'
+  const SELECTED_ROW = 'bg-accent/20 dark:bg-[#143e24]'
+  const SELECTED_PILL =
+    'bg-accent/20 text-[#0F3D22] dark:bg-[#143e24] dark:text-[#BFF3D2]'
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -154,7 +132,10 @@ export default function DictionaryInterface() {
     if (!query.trim() || !showSuggestions) return []
     const q = query.toLowerCase().trim()
     return data
-      .filter(e => e.word.toLowerCase().includes(q) || e.meaning.toLowerCase().includes(q))
+      .filter(
+        (e) =>
+          e.word.toLowerCase().includes(q) || e.meaning.toLowerCase().includes(q)
+      )
       .slice(0, 5)
   }, [data, query, showSuggestions])
 
@@ -167,14 +148,6 @@ export default function DictionaryInterface() {
     if (!filtered.length) return
     if (!filtered.some((x) => x.id === selectedId)) setSelectedId(filtered[0].id)
   }, [filtered, selectedId])
-
-  useEffect(() => {
-    setSpeechSupported(
-      typeof window !== 'undefined' &&
-      'speechSynthesis' in window &&
-      'SpeechSynthesisUtterance' in window
-    )
-  }, [])
 
   const copy = async (text: string, kind: 'word' | 'definition') => {
     try {
@@ -193,7 +166,7 @@ export default function DictionaryInterface() {
         document.body.removeChild(ta)
         setCopied(kind)
         setTimeout(() => setCopied(null), 1200)
-      } catch { }
+      } catch {}
     }
   }
 
@@ -209,51 +182,7 @@ export default function DictionaryInterface() {
       await navigator.clipboard.writeText(text)
       setSharedOk(true)
       setTimeout(() => setSharedOk(false), 1200)
-    } catch { }
-  }
-
-  const getSpeechLang = () => {
-    if (language === 'Français') return 'fr-FR'
-    if (language === 'English') return 'en-US'
-    return 'rn-BI'
-  }
-
-  const stopSpeaking = () => {
-    if (typeof window === 'undefined') return
-    try {
-      window.speechSynthesis.cancel()
-    } catch {
-    } finally {
-      setIsSpeaking(false)
-    }
-  }
-
-  const speakWord = (text?: string) => {
-    if (!text) return
-    setSpeechError(null)
-
-    if (!speechSupported) {
-      setSpeechError('Speech is not supported in this browser.')
-      return
-    }
-
-    try {
-      stopSpeaking()
-      const u = new SpeechSynthesisUtterance(text)
-      u.lang = getSpeechLang()
-      u.rate = 0.95
-      u.pitch = 1
-      u.onstart = () => setIsSpeaking(true)
-      u.onend = () => setIsSpeaking(false)
-      u.onerror = () => {
-        setIsSpeaking(false)
-        setSpeechError('Could not play voice. Try Chrome/Edge or another voice.')
-      }
-      window.speechSynthesis.speak(u)
-    } catch {
-      setIsSpeaking(false)
-      setSpeechError('Could not start speech.')
-    }
+    } catch {}
   }
 
   const toggleFavorite = (id: number) => {
@@ -268,41 +197,27 @@ export default function DictionaryInterface() {
   const isFav = (id?: number) => (id ? favorites.has(id) : false)
 
   const posLabel = (pos: DictionaryEntry['pos']) =>
-    pos === 'noun'
-      ? 'Noun'
-      : pos === 'verb'
-        ? 'Verb'
-        : pos === 'adj'
-          ? 'Adjective'
-          : 'Adverb'
+    pos === 'noun' ? 'Noun' : pos === 'verb' ? 'Verb' : pos === 'adj' ? 'Adjective' : 'Adverb'
 
   const sharePayload = selected
     ? `${selected.word} (${posLabel(selected.pos)}) — ${selected.meaning}\n\nExamples:\n${selected.examples
-      .map((x) => `• ${x}`)
-      .join('\n')}\n\nSynonyms: ${selected.synonyms.join(
-        ', '
-      )}\nTags: ${selected.tags.join(', ')}`
+        .map((x) => `• ${x}`)
+        .join('\n')}\n\nSynonyms: ${selected.synonyms.join(', ')}\nTags: ${selected.tags.join(', ')}`
     : ''
 
   return (
-    <div className={`min-h-[calc(100vh-3.5rem)] p-4 md:p-6 bg-white ${BG_DARK} transition-colors flex flex-col`}>
+    <div className={`min-h-[calc(100vh-3.5rem)] p-4 md:p-6 ${BG_LIGHT} flex flex-col`}>
       <style jsx global>{`
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
       <div className="flex-1 max-w-7xl mx-auto space-y-6">
-
-        <div className={`rounded ${BORDER} ${SURFACE_LIGHT} ${SURFACE_DARK} shadow-sm p-4`}>
+        <div className={`rounded ${BORDER} ${SURFACE_LIGHT} shadow-sm p-4`}>
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             <div className="flex-1 flex items-center gap-2">
               <div className="relative flex-1">
-                <Search className={`w-4 h-4 ${MUTED2} absolute left-3 top-1/2 -translate-y-1/2`} />
+                <Search className={`w-4 h-4 ${MUTED2} absolute left-4 top-1/2 -translate-y-1/2`} />
                 <input
                   value={query}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => {
@@ -312,12 +227,12 @@ export default function DictionaryInterface() {
                   onFocus={() => setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                   placeholder={t.search}
-                  className={`w-full pl-9 pr-3 py-2.5 text-sm outline-none ${TEXT}
-                    placeholder:text-black/35 dark:placeholder:text-white/35`}
+                  className={`w-full pl-11 pr-4 py-2.5 text-sm bg-input border border-border rounded outline-none ${TEXT}
+                    placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background transition-all`}
                 />
 
                 {suggestions.length > 0 && (
-                  <div className={`absolute top-full left-0 right-0 z-10 mt-1 border border-black/10 dark:border-white/10 rounded-lg shadow-lg overflow-hidden ${SURFACE_LIGHT} ${SURFACE_DARK}`}>
+                  <div className={`absolute top-full left-0 right-0 z-10 mt-2 ${BORDER} rounded shadow-lg overflow-hidden ${SURFACE_LIGHT}`}>
                     {suggestions.map((s) => (
                       <button
                         key={s.id}
@@ -326,7 +241,7 @@ export default function DictionaryInterface() {
                           setQuery(s.word)
                           setShowSuggestions(false)
                         }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-black/[0.05] dark:hover:bg-white/[0.05] ${TEXT} border-b border-black/5 dark:border-white/5 last:border-0`}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-accent ${TEXT} border-b border-border last:border-0`}
                       >
                         <div className="font-semibold">{s.word}</div>
                         <div className="text-xs opacity-60 truncate">{s.meaning}</div>
@@ -336,20 +251,16 @@ export default function DictionaryInterface() {
                 )}
               </div>
 
-              <span
-                className={`px-3 py-2.5 text-sm rounded dark:hover:bg-black outline-none ${TEXT}`}
-              >
-                Kirundi
-              </span>
+              <span className={`px-3 py-2.5 text-sm rounded ${TEXT}`}>Kirundi</span>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <div className={`inline-flex items-center gap-2 px-3 py-2.5 rounded dark:hover:bg-black/50 ${TEXT}`}>
-                <SlidersHorizontal className={`w-4 h-4 ${MUTED2}`} />
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded border border-border bg-input hover:bg-accent transition-colors">
+                <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
                 <select
                   value={posFilter}
                   onChange={(e) => setPosFilter(e.target.value as any)}
-                  className={`text-sm  dark:hover:bg-black  outline-none ${TEXT}`}
+                  className={`text-sm bg-transparent outline-none ${TEXT} font-medium cursor-pointer`}
                 >
                   <option value="all">{t.allPosts}</option>
                   <option value="noun">izina</option>
@@ -362,32 +273,29 @@ export default function DictionaryInterface() {
               <button
                 onClick={() => setOnlyFavorites((v) => !v)}
                 className={[
-                  'px-3 py-2.5 text-xs rounded border-none hover:bg-green-300  dark:hover:bg-green-500 transition flex items-center gap-2',
-                  onlyFavorites ? SELECTED_PILL : `${SOFT} ${TEXT} hover:opacity-90`,
-                  BORDER,
+                  'px-4 py-2 text-xs rounded border border-border transition flex items-center gap-2 font-medium',
+                  onlyFavorites ? `${SELECTED_PILL}` : `${SOFT} ${TEXT} hover:bg-accent`,
                 ].join(' ')}
               >
                 {onlyFavorites ? <Star className="w-4 h-4" /> : <StarOff className="w-4 h-4" />}
-                {t.favorites}
+                <span className="hidden sm:inline">{onlyFavorites ? 'Favorites' : 'All'}</span>
               </button>
+            </div>
 
-              <div className={`text-xs ${MUTED} px-2`}>
-                {loading ? '...' : `${filtered.length} results`}
-              </div>
+            <div className={`text-xs ${MUTED} px-2`}>
+              {loading ? '...' : `${filtered.length} results`}
             </div>
           </div>
         </div>
 
-
         <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4">
-
-          <div className={`rounded ${BORDER} ${SURFACE_LIGHT} ${SURFACE_DARK} shadow-sm overflow-hidden`}>
-            <div className={`px-4 py-3 border-b border-black/10 dark:border-white/10 flex items-center justify-between`}>
+          <div className={`rounded ${BORDER} ${SURFACE_LIGHT} shadow-sm overflow-hidden`}>
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <span className={`text-xs font-semibold ${TEXT}`}>{language}</span>
               <span className={`text-[11px] ${MUTED2}`}>fyondako</span>
             </div>
 
-            <div className="max-h-[420px] overflow-y-auto no-scrollbar">
+            <div className="max-h-105 overflow-y-auto no-scrollbar">
               {loading ? (
                 <DictionaryListSkeleton />
               ) : error ? (
@@ -408,23 +316,20 @@ export default function DictionaryInterface() {
                     key={e.id}
                     onClick={() => setSelectedId(e.id)}
                     className={[
-                      'w-full text-left px-4 py-3 border-b border-black/5 dark:border-white/10 transition',
-                      selected?.id === e.id ? SELECTED_ROW : 'hover:bg-black/[0.03] dark:hover:bg-white/[0.04]',
+                      'w-full text-left px-4 py-3 border-b border-border transition',
+                      selected?.id === e.id ? SELECTED_ROW : 'hover:bg-accent',
                     ].join(' ')}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <span className={`font-semibold truncate ${TEXT}`}>{e.word}</span>
-                          <span
-                            className={`text-[11px] px-2 py-0.5 rounded-full ${BORDER} ${MUTED} bg-transparent`}
-                          >
+                          <span className={`text-[11px] px-2 py-0.5 rounded-full ${BORDER} ${MUTED} bg-transparent`}>
                             {e.rawPos || posLabel(e.pos)}
                           </span>
                           {isFav(e.id) && <Star className="w-3.5 h-3.5 text-yellow-500" />}
                         </div>
                       </div>
-
                       <ArrowRight className={`w-4 h-4 ${MUTED2} mt-1`} />
                     </div>
                   </button>
@@ -433,9 +338,8 @@ export default function DictionaryInterface() {
             </div>
           </div>
 
-
-          <div className={`rounded ${BORDER} ${SURFACE_LIGHT} ${SURFACE_DARK} shadow-sm overflow-hidden`}>
-            <div className="px-4 py-3 border-b border-black/10  flex items-center justify-between">
+          <div className={`rounded ${BORDER} ${SURFACE_LIGHT} shadow-sm overflow-hidden`}>
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-2 min-w-0">
                 <span className={`text-xs font-semibold ${TEXT}`}>{t.definition}</span>
                 {selected?.pos && (
@@ -448,31 +352,24 @@ export default function DictionaryInterface() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => selected?.word && copy(selected.word, 'word')}
-                  className="p-2 rounded hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition"
+                  className="p-2 rounded hover:bg-accent transition"
                   title={`${t.copy} word`}
                 >
-                  {copied === 'word' ? (
-                    <Check className={`w-4 h-4 ${TEXT}`} />
-                  ) : (
-                    <Copy className={`w-4 h-4 ${TEXT}`} />
-                  )}
+                  {copied === 'word' ? <Check className={`w-4 h-4 ${TEXT}`} /> : <Copy className={`w-4 h-4 ${TEXT}`} />}
                 </button>
 
                 <button
                   onClick={() => selected && share(sharePayload)}
-                  className="p-2 rounded hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition disabled:opacity-40"
+                  className="p-2 rounded hover:bg-accent transition disabled:opacity-40"
                   title={t.share}
                   disabled={!selected}
                 >
-                  {sharedOk ? (
-                    <Check className={`w-4 h-4 ${TEXT}`} />
-                  ) : (
-                    <Share2 className={`w-4 h-4 ${TEXT}`} />
-                  )}
+                  {sharedOk ? <Check className={`w-4 h-4 ${TEXT}`} /> : <Share2 className={`w-4 h-4 ${TEXT}`} />}
                 </button>
+
                 <button
                   onClick={() => selected && toggleFavorite(selected.id)}
-                  className="p-2 rounded hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition"
+                  className="p-2 rounded hover:bg-accent transition"
                   title={selected && isFav(selected.id) ? 'Remove favorite' : 'Add favorite'}
                 >
                   {selected && isFav(selected.id) ? (
@@ -484,9 +381,7 @@ export default function DictionaryInterface() {
               </div>
             </div>
 
-
-
-            <div className="p-4 space-y-4 overflow-y-auto no-scrollbar max-h-[420px]">
+            <div className="p-4 space-y-4 overflow-y-auto no-scrollbar max-h-105">
               {loading ? (
                 <DictionaryDetailSkeleton />
               ) : (
@@ -500,15 +395,12 @@ export default function DictionaryInterface() {
                     </p>
                   </div>
 
-                  <div className={`rounded ${BORDER} ${SURFACE_LIGHT} ${SURFACE_DARK} p-4`}>
+                  <div className={`rounded ${BORDER} ${SURFACE_LIGHT} p-4`}>
                     <p className={`text-xs font-semibold mb-3 ${TEXT}`}>Uturorero:</p>
                     {selected?.examples?.length ? (
                       <ul className="space-y-2">
                         {selected.examples.map((ex, i) => (
-                          <li
-                            key={i}
-                            className={`text-sm rounded ${SOFT} ${BORDER} p-3 ${TEXT}`}
-                          >
+                          <li key={i} className={`text-sm rounded ${SOFT} ${BORDER} p-3 ${TEXT}`}>
                             {ex}
                           </li>
                         ))}
@@ -517,15 +409,13 @@ export default function DictionaryInterface() {
                       <p className={`text-sm ${MUTED}`}>Nta karorero gahari.</p>
                     )}
                   </div>
-                  <div className={`rounded ${BORDER} ${SURFACE_LIGHT} ${SURFACE_DARK} p-4`}>
+
+                  <div className={`rounded ${BORDER} ${SURFACE_LIGHT} p-4`}>
                     <p className={`text-xs font-semibold mb-3 ${TEXT}`}>Ivyitiranwa:</p>
                     {selected?.synonyms?.length ? (
                       <ul className="space-y-2">
                         {selected.synonyms.map((syn, i) => (
-                          <li
-                            key={i}
-                            className={`text-sm rounded ${SOFT} ${BORDER} p-3 ${TEXT}`}
-                          >
+                          <li key={i} className={`text-sm rounded ${SOFT} ${BORDER} p-3 ${TEXT}`}>
                             {syn}
                           </li>
                         ))}
@@ -534,15 +424,13 @@ export default function DictionaryInterface() {
                       <p className={`text-sm ${MUTED}`}>Nta vyitiranwa bihari.</p>
                     )}
                   </div>
-                  <div className={`rounded ${BORDER} ${SURFACE_LIGHT} ${SURFACE_DARK} p-4`}>
+
+                  <div className={`rounded ${BORDER} ${SURFACE_LIGHT} p-4`}>
                     <p className={`text-xs font-semibold mb-3 ${TEXT}`}>imvugo:</p>
                     {selected?.expressions?.length ? (
                       <ul className="space-y-2">
                         {selected.expressions.map((exp, i) => (
-                          <li
-                            key={i}
-                            className={`text-sm rounded ${SOFT} p-3 ${TEXT}`}
-                          >
+                          <li key={i} className={`text-sm rounded ${SOFT} p-3 ${TEXT}`}>
                             {exp}
                           </li>
                         ))}
@@ -556,20 +444,11 @@ export default function DictionaryInterface() {
             </div>
           </div>
         </div>
+          
+      <Footer2 />
+
       </div>
 
-      {searching && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/5 dark:bg-black/20 backdrop-blur-[2px]">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 flex flex-col items-center gap-4 border border-black/5 dark:border-white/10 animate-in fade-in zoom-in duration-200">
-            <div className="w-12 h-12 border-4 border-green-500/20 border-t-green-500 rounded-full animate-spin" />
-            <div className="flex flex-col items-center gap-1">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">Muriko murahereye...</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Turiko turarondera inyishu zanyu</p>
-            </div>
-          </div>
-        </div>
-      )}
-      <Footer2 />
     </div>
   )
 }

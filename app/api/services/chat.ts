@@ -1,5 +1,5 @@
 import { getEndpointUrl } from '../config/endpoints'
-import { ChatDomain } from '../types/chat.types'
+import { ChatDomain, ChatMessage } from '../types/chat.types'
 
 function determineLanguage(domain: ChatDomain, message: string): string {
     const msg = message.toLowerCase()
@@ -41,7 +41,7 @@ export async function sendChatMessage(
     domain: ChatDomain,
     category: string = 'Global',
     sessionId: string = 'a4f013c1-d3ea-4db8-adaa-f93d860893f7',
-    userId: string = 'be4ff3ae-dc3c-49c1-b3e6-385e81d3a5dd'
+    userId: string = '28170da6-c67f-4995-9889-d3c0d64e9ff0'
 ): Promise<string> {
     const url = getEndpointUrl('CHAT', '/chat/')
 
@@ -99,5 +99,62 @@ export async function sendChatMessage(
         clearTimeout(timeoutId)
         console.error('Chat API Error:', error)
         return "Server unreachable. Check backend is running and CORS is enabled."
+    }
+}
+export async function regenerateAssistantReply(
+    editedMessageId: number,
+    newContent: string,
+    sessionId: string,
+    chatHistory: ChatMessage[],
+    domain: ChatDomain,
+    category: string,
+    userId: string
+): Promise<{ assistantMessageId: number; content: string }> {
+    const url = getEndpointUrl('CHAT', '/chat/regenerate')
+
+    const payload = {
+        edited_message_id: editedMessageId,
+        new_content: newContent,
+        session_id: sessionId,
+        chat_history: chatHistory,
+        domain: domain,
+        category: category,
+        user_id: userId,
+        language: determineLanguage(domain, newContent)
+    }
+
+    console.log('Regenerating assistant reply with payload:', payload)
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30s timeout
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal,
+        })
+
+        clearTimeout(timeoutId)
+
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`)
+        }
+
+        const data = await response.json()
+        let answer = data.answer || data.reply || data.message || ''
+        answer = cleanResponse(answer)
+
+        return {
+            assistantMessageId: data.assistant_message_id || Date.now(),
+            content: answer
+        }
+    } catch (error: any) {
+        clearTimeout(timeoutId)
+        console.error('Regenerate API Error:', error)
+        throw error
     }
 }

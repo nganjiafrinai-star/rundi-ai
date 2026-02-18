@@ -119,9 +119,9 @@ export default function LoginPage() {
                 <RundiLogo />
 
                 <div className="mt-10 w-full max-w-[360px]">
-                    <div className="rounded border-1 dark:border-white  bg-white dark:bg-gray-800 px-5 py-3 shadow-sm ">
+                    <div className="rounded-full border border-border bg-input px-5 py-3 shadow-sm hover:bg-input-hover transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
                         <input
-                            className="w-full text-[14px] border-none bg-none text-black/80 dark:text-gray-200 outline-none placeholder:text-black/35 dark:placeholder:text-gray-500"
+                            className="w-full text-[14px] border-none bg-transparent text-foreground outline-none placeholder:text-muted-foreground transition-colors"
                             placeholder="Injiza imeri yawe"
                             inputMode="email"
                             value={email}
@@ -130,9 +130,9 @@ export default function LoginPage() {
                         />
                     </div>
 
-                    <div className="mt-4 flex items-center rounded border-1 dark:border-white  bg-white dark:bg-gray-800 px-5 py-3 shadow-sm ">
+                    <div className="mt-4 flex items-center rounded-full border border-border bg-input px-5 py-3 shadow-sm hover:bg-input-hover transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
                         <input
-                            className="w-full text-[14px] text-black/80 dark:text-gray-200 outline-none placeholder:text-black/35 dark:placeholder:text-gray-500"
+                            className="w-full text-[14px] bg-transparent text-foreground outline-none placeholder:text-muted-foreground transition-colors"
                             placeholder="Injiza Kabanga yawe"
                             type={showPassword ? 'text' : 'password'}
                             value={password}
@@ -142,7 +142,7 @@ export default function LoginPage() {
                         <button
                             type="button"
                             onClick={() => setShowPassword((v) => !v)}
-                            className="ml-2 rounded p-1 hover:bg-black/5 dark:hover:bg-gray-700 transition-colors"
+                            className="ml-2 rounded-full p-1 hover:bg-accent dark:hover:bg-gray-700 transition-colors"
                             aria-label={showPassword ? 'Hide password' : 'Show password'}
                         >
                             <EyeIcon open={showPassword} />
@@ -151,13 +151,13 @@ export default function LoginPage() {
 
                     {error && <p className="mt-2 text-[12px] text-red-500 text-center">{error}</p>}
 
-                    <p className="mt-5 text-[13px] leading-relaxed text-black/55 dark:text-gray-400">
+                    <p className="mt-5 text-[13px] leading-relaxed text-muted-foreground/55 dark:text-gray-400">
                         Iyandikishe wongere winjire muri Rundi {' '}
-                        <Link href="/condition" className="text-black dark:text-gray-300 underline underline-offset-4 hover:opacity-80">
+                        <Link href="/condition" className="text-foreground dark:text-gray-300 underline underline-offset-4 hover:opacity-80">
                             Uko ikoreshwa
                         </Link>{' '}
                         n&apos;{' '}
-                        <Link href="/security" className="text-black dark:text-gray-300 underline underline-offset-4 hover:opacity-80">
+                        <Link href="/security" className="text-foreground dark:text-gray-300 underline underline-offset-4 hover:opacity-80">
                             Umutekano
                         </Link>
                         .
@@ -167,7 +167,7 @@ export default function LoginPage() {
                         <Link href="#" className="text-[#147E4E] dark:text-[#147E4E] hover:opacity-80">
                             Wibagiye Kabanga?
                         </Link>
-                        <span className="text-slate-500 dark:text-slate-400">
+                        <span className="text-muted-foreground dark:text-slate-400">
                             admin@nova.io
                         </span>
                     </div>
@@ -187,7 +187,7 @@ export default function LoginPage() {
                                 type="button"
                                 onClick={handleGoogleSignIn}
                                 disabled={isLoading}
-                                className="grid h-12 w-12 place-items-center rounded-full border border-black/10 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm hover:bg-black/5 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                                className="grid h-12 w-12 place-items-center rounded-full border border-border dark:border-gray-700 bg-card dark:bg-gray-800 shadow-sm hover:bg-accent dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                                 aria-label="Continue with Google"
                             >
                                 <GoogleIcon />
@@ -196,7 +196,7 @@ export default function LoginPage() {
                                 type="button"
                                 onClick={handleWhatsAppSignIn}
                                 disabled={isLoading}
-                                className="grid h-12 w-12 place-items-center rounded-full border border-black/10 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm hover:bg-black/5 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+                                className="grid h-12 w-12 place-items-center rounded-full border border-border dark:border-gray-700 bg-card dark:bg-gray-800 shadow-sm hover:bg-accent dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                                 aria-label="Continue with WhatsApp"
                             >
                                 <WhatsAppIcon />
@@ -205,9 +205,9 @@ export default function LoginPage() {
                     </div>
                 </div>
 
-                <div className="mt-auto pb-10 pt-14 text-center text-[13px] text-black/35 dark:text-gray-500">
+                <div className="mt-auto pb-10 pt-14 text-center text-[13px] text-muted-foreground/35 dark:text-gray-500">
                     <span>ikaze n&apos;ikaribu mwene wacu </span>
-                    <Link href="#" className="hover:text-black/70 dark:hover:text-gray-300 transition-colors">
+                    <Link href="#" className="hover:text-foreground/70 dark:hover:text-gray-300 transition-colors">
                         Nimutwakure
                     </Link>
                 </div>

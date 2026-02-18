@@ -113,13 +113,13 @@ export default function RegisterPage() {
         <RundiLogo />
 
         <div className="mt-10 w-full max-w-[380px]">
-          <p className="mx-auto mb-6 max-w-[320px] text-center text-[13px] leading-relaxed text-black/45 dark:text-gray-400">
+          <p className="mx-auto mb-6 max-w-[320px] text-center text-[13px] leading-relaxed text-muted-foreground/45 dark:text-gray-400">
             Koreshe imeri yanyu mu kwiyandikisha
           </p>
 
-          <div className="rounded border-1 dark:border-white bg-white dark:bg-gray-800 px-5 py-3 shadow-sm focus-within:border-[#2F59FF]/40 dark:focus-within:border-blue-500/40 transition-colors">
+          <div className="rounded-full border border-border bg-input px-5 py-3 shadow-sm hover:bg-input-hover transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
             <input
-              className="w-full bg-transparent text-[14px] text-black/80 dark:text-gray-200 outline-none placeholder:text-black/35 dark:placeholder:text-gray-500"
+              className="w-full bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground transition-colors"
               placeholder="Injiza imeri yanyu"
               inputMode="email"
               autoComplete="email"
@@ -128,9 +128,9 @@ export default function RegisterPage() {
             />
           </div>
 
-          <div className="mt-4 flex items-center rounded border-1 dark:border-white bg-white dark:bg-gray-800 px-5 py-3 shadow-sm focus-within:border-[#2F59FF]/40 dark:focus-within:border-blue-500/40 transition-colors">
+          <div className="mt-4 flex items-center rounded-full border border-border bg-input px-5 py-3 shadow-sm hover:bg-input-hover transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
             <input
-              className="w-full bg-transparent text-[14px] text-black/80 dark:text-gray-200 outline-none placeholder:text-black/35 dark:placeholder:text-gray-500"
+              className="w-full bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground transition-colors"
               placeholder="Injize kabanga nshasha"
               type={showPw ? 'text' : 'password'}
               autoComplete="new-password"
@@ -140,16 +140,16 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setShowPw((v) => !v)}
-              className="ml-2 rounded p-1 hover:bg-black/5 dark:hover:bg-gray-700 transition-colors"
+              className="ml-2 rounded-full p-1 hover:bg-muted dark:hover:bg-gray-700 transition-colors"
               aria-label={showPw ? 'Hide password' : 'Show password'}
             >
               <EyeIcon open={showPw} />
             </button>
           </div>
 
-          <div className="mt-4 flex items-center rounded border-1  dark:border-white bg-white dark:bg-gray-800 px-5 py-3 shadow-sm focus-within:border-[#2F59FF]/40 dark:focus-within:border-blue-500/40 transition-colors">
+          <div className="mt-4 flex items-center rounded-full border border-border bg-input px-5 py-3 shadow-sm hover:bg-input-hover transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background">
             <input
-              className="w-full bg-transparent text-[14px] text-black/80 dark:text-gray-200 outline-none placeholder:text-black/35 dark:placeholder:text-gray-500"
+              className="w-full bg-transparent text-[14px] text-foreground outline-none placeholder:text-muted-foreground transition-colors"
               placeholder="Subira winjize kabanga"
               type={showPw2 ? 'text' : 'password'}
               autoComplete="new-password"
@@ -159,7 +159,7 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setShowPw2((v) => !v)}
-              className="ml-2 rounded p-1 hover:bg-black/5 dark:hover:bg-gray-700 transition-colors"
+              className="ml-2 rounded-full p-1 hover:bg-muted dark:hover:bg-gray-700 transition-colors"
               aria-label={showPw2 ? 'Hide password' : 'Show password'}
             >
               <EyeIcon open={showPw2} />

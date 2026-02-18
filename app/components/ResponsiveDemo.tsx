@@ -80,7 +80,6 @@ export default function ResponsiveDemo() {
                         </ResponsiveGrid>
                     </section>
 
-                    {/* Responsive Typography Demo */}
                     <section className="mb-12">
                         <h2 className={`${fontSize.xl} font-bold text-gray-900 dark:text-white mb-6`}>
                             Responsive Typography

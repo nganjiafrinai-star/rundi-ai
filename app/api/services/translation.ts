@@ -94,7 +94,7 @@ export async function translateText(
     const translatedText = extractTranslationText(response.data)
 
     if (!translatedText || !translatedText.trim()) {
-        throw new Error(response.error || 'No translation returned by the server.')
+        throw new Error(response.error || 'No translation found.')
     }
 
     return {

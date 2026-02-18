@@ -2,19 +2,32 @@
 
 const Footer2 = () => {
     return (
-        <footer className="mt-auto w-full bg-transparent text-gray-700 dark:text-gray-300">
-            <div className="sticky bottom-0 px-6 py-4 max-w-7xl mx-auto flex flex-wrap items-center justify-center sm:justify-between gap-3 text-sm opacity-60">
-                <p className="text-center sm:text-left">&copy; {new Date().getFullYear()} AFRINAI. Tous droits réservés.</p>
-                <div className="flex flex-wrap items-center justify-center gap-4">
-                    <a href="/condition" className="hover:text-[#28C766] transition">
-                        Conditions d’utilisation
-                    </a>
-                    <a href="/politic" className="hover:text-[#28C766] transition">
-                        Politique de confidentialité
-                    </a>
-                </div>
-            </div>
-        </footer>
+        <footer className="mt-auto w-full bg-background">
+  <div className="max-w-5xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
+
+    <p>
+      © {new Date().getFullYear()} AFRINAI
+    </p>
+
+    <div className="flex items-center gap-6">
+      <a
+        href="/condition"
+        className="hover:text-foreground transition-colors"
+      >
+        Conditions
+      </a>
+
+      <a
+        href="/politic"
+        className="hover:text-foreground transition-colors"
+      >
+        Privacy
+      </a>
+    </div>
+
+  </div>
+</footer>
+
     );
 };
 

@@ -284,20 +284,20 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
 
   return (
     <aside
-      className={`flex h-screen flex-col bg-sidebar text-gray-900 dark:text-gray-100 border-r border-sidebar-border transition-all duration-300 ${isCollapsed ? 'lg:w-16' : 'w-[280px]'
+      className={`flex h-screen flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-300 ${isCollapsed ? 'lg:w-16' : 'w-[280px]'
         }`}
     >
       {/*  Mobile header */}
       <div className="lg:hidden flex items-center justify-between px-4 py-4 border-b border-sidebar-border">
         {!isCollapsed && (
           <div className="flex items-center">
-            <span className="text-slate-900 dark:text-gray-100 font-semibold text-lg tracking-tight">Rundi AI</span>
+            <span className="text-sidebar-foreground font-semibold text-lg tracking-tight">Rundi AI</span>
           </div>
         )}
         <button
           type="button"
           onClick={onMobileClose}
-          className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
+          className="rounded-md p-2 text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors cursor-pointer"
           aria-label="Close sidebar"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -311,14 +311,14 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
       <div className="hidden lg:flex items-center justify-between px-4 py-4">
         {!isCollapsed && (
           <div className="flex items-center">
-            <span className="text-slate-900 dark:text-gray-100 font-semibold tracking-tight">Rundi AI</span>
+            <span className="text-sidebar-foreground font-semibold tracking-tight">Rundi AI</span>
           </div>
         )}
 
         <button
           type="button"
           onClick={onToggleCollapse}
-          className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
+          className="rounded-md p-2 text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors cursor-pointer"
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {isCollapsed ? (
@@ -370,13 +370,13 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
         {!isCollapsed ? (
           <div className="space-y-1">
             <div className="px-2 py-3">
-              <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <h3 className="text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider">
                 {t.recentSearches}
               </h3>
             </div>
 
             {filteredSessions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-slate-500 dark:text-gray-400">
+              <div className="flex flex-col items-center justify-center py-8 text-sidebar-foreground/50">
                 <p className="text-sm font-medium text-center">{t.noHistory}</p>
               </div>
             ) : (
@@ -391,7 +391,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                       onClick={() => handleSessionClick(session)}
                       className={`
                         group relative flex items-center gap-3 rounded-xl p-2 cursor-pointer transition-all duration-200
-                        ${isActive ? 'bg-white dark:bg-popover border border-gray-200 dark:border-border shadow-sm' : 'hover:bg-gray-100 dark:hover:bg-sidebar-accent/70'}
+                        ${isActive ? 'bg-sidebar-accent text-sidebar-accent-foreground border border-sidebar-border shadow-sm' : 'hover:bg-sidebar-accent/50 dark:hover:bg-sidebar-accent/70 text-sidebar-foreground'}
                       `}
                     >
                       <div className="flex-1 min-w-0">
@@ -401,8 +401,8 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                               'text-sm font-medium transition-all duration-200',
                               'focus-visible:outline-none active:outline-none focus:ring-0 active:ring-0 outline-none border-none',
                               isActive
-                                ? 'text-gray-900 dark:text-gray-100'
-                                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:translate-y-[-1px]',
+                                ? 'text-sidebar-accent-foreground'
+                                : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:translate-y-[-1px]',
                             ].join(' ')}
                           >
                             {session.__title}
@@ -410,7 +410,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
 
                           {isPinned && (
                             <span
-                              className="inline-flex items-center justify-center rounded-md bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                              className="inline-flex items-center justify-center rounded-md bg-sidebar-accent text-sidebar-accent-foreground"
                               title="Pinned"
                             >
                               <Pin className="h-3.5 w-3.5" />
@@ -418,7 +418,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                           )}
                         </div>
 
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{session.__preview || session.preview}</p>
+                        <p className="text-xs text-sidebar-foreground/50 truncate">{session.__preview || session.preview}</p>
                       </div>
 
                       <div className="flex flex-col items-end gap-2">
@@ -430,11 +430,11 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                             activeTriggerRef.current = e.currentTarget
                             setOpenDotsForId((prev) => (prev === session.id ? null : session.id))
                           }}
-                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-gray-200 dark:hover:bg-sidebar-accent transition-opacity cursor-pointer"
+                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-sidebar-accent transition-opacity cursor-pointer"
                           aria-label="History actions"
                           title="Actions"
                         >
-                          <svg className="w-4 h-4 text-gray-500 dark:text-white" viewBox="0 0 24 24" fill="currentColor">
+                          <svg className="w-4 h-4 text-sidebar-foreground/50 dark:text-white" viewBox="0 0 24 24" fill="currentColor">
                             <circle cx="5" cy="12" r="1.8" />
                             <circle cx="12" cy="12" r="1.8" />
                             <circle cx="19" cy="12" r="1.8" />
@@ -444,7 +444,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                         {openDotsForId === session.id && mounted && createPortal(
                           <div
                             ref={dotsMenuRef}
-                            className="fixed w-52 bg-white dark:bg-popover border border-gray-200 dark:border-border rounded shadow-lg overflow-hidden z-[9999]"
+                            className="fixed w-52 bg-card dark:bg-popover border border-border dark:border-border rounded shadow-lg overflow-hidden z-[9999]"
                             style={{
                               bottom: `calc(100vh - ${dotsMenuPos.top - 4}px)`,
                               left: `${dotsMenuPos.left - 208}px`,
@@ -454,7 +454,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                             <button
                               type="button"
                               onClick={() => { onRename(session); setOpenDotsForId(null); }}
-                              className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-sidebar-accent text-gray-700 dark:text-gray-200"
+                              className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-sidebar-accent text-sidebar-foreground"
                             >
                               <Pencil className="h-4 w-4" />
                               <span>{t.rename}</span>
@@ -463,7 +463,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                             <button
                               type="button"
                               onClick={() => { onPinToggle(session); setOpenDotsForId(null); }}
-                              className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-sidebar-accent text-gray-700 dark:text-gray-200"
+                              className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-sidebar-accent text-sidebar-foreground"
                             >
                               {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
                               <span>{isPinned ? t.unpin : t.pin}</span>
@@ -472,7 +472,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                             <button
                               type="button"
                               onClick={() => { onArchiver(session); setOpenDotsForId(null); }}
-                              className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-sidebar-accent text-gray-700 dark:text-gray-200"
+                              className="w-full flex items-center gap-2 text-left px-3 py-2 text-sm hover:bg-sidebar-accent text-sidebar-foreground"
                             >
                               <Archive className="h-4 w-4" />
                               <span>{t.archive}</span>
@@ -504,14 +504,14 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
                 onClick={() => handleSessionClick(session)}
                 className={`
                   grid h-9 w-9 place-items-center rounded-lg text-sm cursor-pointer
-                  ${currentSession?.id === session.id ? 'ring-2 ring-gray-300 dark:ring-gray-600' : ''}
+                  ${currentSession?.id === session.id ? 'ring-2 ring-sidebar-ring' : ''}
                   ${session.page === 'dashboard'
-                    ? 'bg-white dark:bg-popover text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-border'
+                    ? 'bg-card dark:bg-popover text-sidebar-foreground border border-sidebar-border'
                     : session.page === 'traduction'
-                      ? 'bg-white dark:bg-popover text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-border'
+                      ? 'bg-card dark:bg-popover text-sidebar-foreground border border-sidebar-border'
                       : session.page === 'dictionary'
-                        ? 'bg-white dark:bg-popover text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-border'
-                        : 'bg-white dark:bg-popover text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-border'
+                        ? 'bg-card dark:bg-popover text-sidebar-foreground border border-sidebar-border'
+                        : 'bg-card dark:bg-popover text-sidebar-foreground border border-sidebar-border'
                   }
                 `}
                 title={session.__title || session.title}
@@ -528,8 +528,8 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
           <div
             className={`
               absolute bottom-full mb-2 z-50 overflow-hidden
-              bg-white dark:bg-popover
-              border border-gray-200 dark:border-border
+              bg-card dark:bg-popover
+              border border-sidebar-border
               rounded-lg shadow-lg
               ${isCollapsed ? 'left-14 w-56' : 'left-0 right-0 mx-4'}
             `}
@@ -537,14 +537,14 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
           >
             <button
               onClick={() => handleMenuItemClick('settings')}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-sidebar-accent transition-colors text-sm text-gray-700 dark:text-gray-200 border-b border-gray-100 dark:border-border cursor-pointer"
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-sidebar-accent transition-colors text-sm text-sidebar-foreground border-b border-sidebar-border cursor-pointer"
             >
               <span>{t.settings}</span>
             </button>
 
             <button
               onClick={() => handleMenuItemClick('download')}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-sidebar-accent transition-colors text-sm text-gray-700 dark:text-gray-200 border-b border-gray-100 dark:border-border cursor-pointer"
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-sidebar-accent transition-colors text-sm text-sidebar-foreground border-b border-sidebar-border cursor-pointer"
             >
               <span>{t.downloadApp}</span>
             </button>
@@ -566,7 +566,7 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
           type="button"
           onClick={() => setIsMenuOpen((v) => !v)}
           className={`
-            flex items-center gap-3 w-full text-left hover:bg-gray-50 dark:hover:bg-sidebar-accent transition-colors cursor-pointer
+            flex items-center gap-3 w-full text-left hover:bg-sidebar-accent transition-colors cursor-pointer
             ${userProfileRadius}
             ${isCollapsed ? 'w-10 h-10 p-0 justify-center mx-auto' : 'p-2'}
           `}
@@ -584,16 +584,16 @@ export default function SideNav({ isCollapsed, onToggleCollapse, onMobileClose }
 
           {!isCollapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-slate-900 dark:text-gray-100 truncate max-w-[150px]">
+              <span className="text-sm font-medium text-sidebar-foreground truncate max-w-[150px]">
                 {user?.name || 'User'}
               </span>
-              <span className="text-xs text-slate-500 dark:text-gray-400 truncate max-w-[150px]">
+              <span className="text-xs text-sidebar-foreground/50 truncate max-w-[150px]">
                 {user?.email || (t as any).account}
               </span>
             </div>
           )}
 
-          {!isCollapsed && <span className="ml-auto text-slate-500 dark:text-gray-400">{isMenuOpen ? '▲' : '▼'}</span>}
+          {!isCollapsed && <span className="ml-auto text-sidebar-foreground/50">{isMenuOpen ? '▲' : '▼'}</span>}
         </button>
       </div>
     </aside>

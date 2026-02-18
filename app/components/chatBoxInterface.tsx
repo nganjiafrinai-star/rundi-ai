@@ -8,9 +8,7 @@ import { ChatDomain } from '@/app/api/types/chat.types'
 import ReactMarkdown from 'react-markdown'
 import Footer2 from './footer2'
 
-// Mapping localized categories to backend domains
-// Mapping localized categories to backend domains and category names
-const getCategoryMetadata = (categoryName: string, t: any): { domain: ChatDomain, category: string } => {
+const getCategoryMetadata = (categoryName: string, t: any): { domain: ChatDomain; category: string } => {
   if (categoryName === t.healthChat) return { domain: 'sante', category: 'Santé' }
   if (categoryName === t.breeding) return { domain: 'elevage', category: 'Élevage' }
   if (categoryName === t.commerce) return { domain: 'commerce', category: 'Commerce' }
@@ -42,7 +40,7 @@ const MessageContent = ({ text, isBot = false }: { text: string; isBot?: boolean
   const filteredText = isBot ? text.replace(/<(think|thought|regex)>[\s\S]*?<\/\1>/gi, '').trim() : text
 
   return (
-    <div className={`leading-relaxed ${isBot ? 'text-slate-900 dark:text-gray-100' : ''}`}>
+    <div className={`leading-relaxed ${isBot ? 'text-foreground dark:text-gray-100' : ''}`}>
       <ReactMarkdown
         components={{
           p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
@@ -50,16 +48,11 @@ const MessageContent = ({ text, isBot = false }: { text: string; isBot?: boolean
           ol: ({ node, ...props }) => <ol className="list-decimal pl-5 space-y-1 mb-2" {...props} />,
           li: ({ node, ...props }) => <li {...props} />,
           a: ({ node, ...props }) => (
-            <a
-              className="text-[#147E4E] hover:underline transition-all"
-              target="_blank"
-              rel="noopener noreferrer"
-              {...props}
-            />
+            <a className="text-[#147E4E] hover:underline transition-all" target="_blank" rel="noopener noreferrer" {...props} />
           ),
-          strong: ({ node, ...props }) => <strong className="font-bold text-slate-800 dark:text-white" {...props} />,
+          strong: ({ node, ...props }) => <strong className="font-bold text-foreground dark:text-white" {...props} />,
           code: ({ node, ...props }) => (
-            <code className="bg-slate-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono" {...props} />
+            <code className="bg-muted dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm font-mono" {...props} />
           ),
         }}
       >
@@ -96,7 +89,7 @@ interface InputAreaProps {
   setInput: (v: string) => void
   loading: boolean
   isTyping: boolean
-  sendMessage: () => void
+  sendMessage: (overrideText?: string) => void
   handleKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void
   selectedCategory: string
   setSelectedCategory: (v: string) => void
@@ -134,8 +127,6 @@ const InputArea = ({
   attachmentRef,
   onFileUpload,
 }: InputAreaProps) => {
-
-  // Auto-resize logic
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
@@ -149,10 +140,10 @@ const InputArea = ({
   return (
     <div className={`p-2 sm:p-4 ${className}`}>
       <div
-        className="mx-auto max-w-[90%] relative rounded-2xl
-          border border-gray-200 dark:border-[#147E4E]/20
-          bg-card shadow-md dark:shadow-none 
-          focus-within:ring-2 focus-within:ring-green-500/30 dark:focus-within:ring-0
+        className="mx-auto max-w-[90%] relative rounded-3xl
+          border border-border dark:border-[#147E4E]/20
+          bg-input shadow-sm dark:shadow-none 
+          focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2
           transition-all duration-200 w-full flex flex-col"
       >
         <textarea
@@ -162,31 +153,33 @@ const InputArea = ({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           rows={1}
-          className="w-full resize-none bg-transparent p-3 sm:p-4 rounded-t-2xl
-              text-slate-900 dark:text-gray-100 focus:outline-none min-h-[50px] max-h-[200px] text-sm custom-scrollbar"
+          className="w-full resize-none bg-transparent p-4 sm:p-5 rounded
+              text-foreground dark:text-gray-100 focus:outline-none min-h-[50px] max-h-[200px] text-sm custom-scrollbar"
         />
 
-        {/* Toolbar Section */}
-        <div className="flex items-center justify-between px-2 pb-2 sm:px-3 sm:pb-3 mt-1">
-          {/* Left: Category Selector */}
+        <div className="flex items-center justify-between px-3 pb-3 sm:px-4 sm:pb-4 mt-1">
           <div className="relative" ref={categoryRef}>
             <button
               type="button"
               onClick={() => setIsCategoryOpen((v) => !v)}
-              className="flex items-center gap-1.5 sm:gap-2 rounded-xl px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs
-                bg-slate-50 dark:bg-black/20
-                text-slate-900 dark:text-gray-100
-                border border-slate-200 dark:border-white/10 cursor-pointer hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+              className="flex items-center gap-1.5 sm:gap-2 rounded-full px-3 sm:px-4 py-2 text-[10px] sm:text-xs
+                bg-muted dark:bg-black/20
+                text-foreground dark:text-gray-100
+                border border-border dark:border-white/10 cursor-pointer hover:bg-input-hover dark:hover:bg-white/5 transition-colors"
             >
               <span className="truncate max-w-[80px] sm:max-w-[120px] font-medium">{selectedCategory}</span>
-              <ChevronDown className={`h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                className={`h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground dark:text-gray-400 transition-transform duration-200 ${
+                  isCategoryOpen ? 'rotate-180' : ''
+                }`}
+              />
             </button>
 
             {isCategoryOpen && (
               <div
                 className="absolute bottom-full left-0 mb-2 w-48 rounded-xl overflow-hidden
-                bg-white dark:bg-[#2A2B3D]
-                border border-slate-200 dark:border-white/10 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200"
+                bg-card dark:bg-[#2A2B3D]
+                border border-border dark:border-white/10 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200"
               >
                 <div className="max-h-[200px] overflow-y-auto custom-scrollbar p-1">
                   {categories.map((c) => (
@@ -198,9 +191,10 @@ const InputArea = ({
                         setIsCategoryOpen(false)
                       }}
                       className={`block w-full px-3 py-2 text-left text-xs rounded-lg cursor-pointer transition-colors
-                        ${selectedCategory === c
-                          ? 'bg-[#147E4E]/10 text-[#147E4E] font-medium dark:text-[#147E4E]'
-                          : 'text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-white/5'
+                        ${
+                          selectedCategory === c
+                            ? 'bg-[#147E4E]/10 text-[#147E4E] font-medium dark:text-[#147E4E]'
+                            : 'text-muted-foreground dark:text-gray-200 hover:bg-accent dark:hover:bg-white/5'
                         }`}
                     >
                       {c}
@@ -211,28 +205,27 @@ const InputArea = ({
             )}
           </div>
 
-          {/* Right: Actions */}
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div className="relative" ref={attachmentRef}>
               <button
                 type="button"
                 onClick={() => setIsAttachmentOpen((v) => !v)}
-                className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer transition-colors"
+                className="rounded-full p-2.5 sm:p-3 text-muted-foreground hover:bg-input-hover dark:hover:bg-white/5 cursor-pointer transition-colors border border-border sm:border-transparent"
                 title="Attach file"
               >
                 <Paperclip className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
 
               {isAttachmentOpen && (
-                <div className="absolute bottom-full right-0 mb-2 w-48 rounded-xl bg-white dark:bg-[#2A2B3D] border border-slate-200 dark:border-white/10 shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2 p-1">
+                <div className="absolute bottom-full right-0 mb-2 w-48 rounded-2xl bg-card dark:bg-[#2A2B3D] border border-border dark:border-white/10 shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2 p-1">
                   <button
                     onClick={() => {
                       onFileUpload()
                       setIsAttachmentOpen(false)
                     }}
-                    className="w-full flex items-center gap-3 px-3 py-2 text-xs sm:text-sm text-slate-700 dark:text-gray-200 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-xs sm:text-sm text-muted-foreground dark:text-gray-200 rounded-xl hover:bg-muted dark:hover:bg-white/5 transition-colors"
                   >
-                    <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md text-blue-600">
+                    <div className="p-1.5 bg-green-500/10 dark:bg-green-900/30 rounded-md text-[#147E4E]">
                       <Paperclip className="h-3.5 w-3.5" />
                     </div>
                     <span>Document</span>
@@ -243,12 +236,13 @@ const InputArea = ({
 
             <button
               type="button"
-              onClick={sendMessage}
+              onClick={() => sendMessage()}
               disabled={!input.trim() || loading || isTyping}
-              className={`rounded-xl p-2 text-white transition-all cursor-pointer shadow-sm
-                ${input.trim() && !loading && !isTyping
-                  ? 'bg-[#147E4E] hover:bg-[#116A41] active:scale-95'
-                  : 'bg-gray-300 dark:bg-gray-700 cursor-not-allowed opacity-50'
+              className={`rounded-full p-2.5 sm:p-3 text-white transition-all cursor-pointer shadow-sm
+                ${
+                  input.trim() && !loading && !isTyping
+                    ? 'bg-[#147E4E] hover:bg-[#116A41] active:scale-95'
+                    : 'bg-muted-foreground/30 dark:bg-gray-700 cursor-not-allowed opacity-50'
                 }`}
             >
               <Send className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -265,6 +259,15 @@ const InputArea = ({
 export default function ChatBoxInterface() {
   const { currentSession, updateSession, createNewSession, activePage } = useChat()
   const { t } = useLanguage()
+
+  // ✅ ALWAYS defer provider updates to avoid "Cannot update ChatProvider while rendering ChatBoxInterface"
+  const schedule = (fn: () => void) => {
+    if (typeof queueMicrotask === 'function') queueMicrotask(fn)
+    else Promise.resolve().then(fn)
+  }
+  const safeUpdateSession = (sessionId: string, updates: any) => {
+    schedule(() => updateSession(sessionId, updates))
+  }
 
   const chatCategories = [t.global, t.healthChat, t.breeding, t.commerce, t.agriculture]
 
@@ -293,7 +296,6 @@ export default function ChatBoxInterface() {
   const [isTyping, setIsTyping] = useState(false)
   const FIXED_BACKEND_USER_ID = 'be4ff3ae-dc3c-49c1-b3e6-385e81d3a5dd'
 
-  // Deduplication and Lock Refs
   const sendLock = useRef(false)
 
   const scrollToBottom = () => {
@@ -318,9 +320,7 @@ export default function ChatBoxInterface() {
 
       if (s.selectedCategory) {
         const idx = chatCategories.indexOf(s.selectedCategory)
-        if (idx !== -1) {
-          setSelectedCategoryIndex(idx)
-        }
+        if (idx !== -1) setSelectedCategoryIndex(idx)
       }
       setShowWelcome((s.chatHistory || []).length === 0)
     } else {
@@ -331,42 +331,79 @@ export default function ChatBoxInterface() {
   }, [currentSession?.id])
 
   useEffect(() => {
-    if (chatHistory.length > 0 && showWelcome) {
-      setShowWelcome(false)
-    }
+    if (chatHistory.length > 0 && showWelcome) setShowWelcome(false)
   }, [chatHistory.length, showWelcome])
+
+  const stableStringify = (obj: any) => {
+    try {
+      return JSON.stringify(obj)
+    } catch {
+      return ''
+    }
+  }
+  const lastSentRef = useRef<string>('')
+
+  const historySig = useMemo(() => {
+    const last = chatHistory[chatHistory.length - 1]
+    const lastKey = last ? `${last.id}:${last.sender}:${(last.text || '').length}` : 'none'
+    return `${chatHistory.length}|${lastKey}`
+  }, [chatHistory])
 
   useEffect(() => {
     if (!currentSession) return
 
+    const bId = currentSession?.state?.backendSessionId
+    const nextState = { chatHistory, selectedCategory, backendSessionId: bId }
+
+    const lastBotMsg = [...chatHistory].reverse().find((msg) => msg.sender === 'Rundi AI' && msg.text?.trim())
+
+    const nextTitle = lastBotMsg
+      ? lastBotMsg.text.length > 25
+        ? lastBotMsg.text.substring(0, 25) + '...'
+        : lastBotMsg.text
+      : `Chat: ${selectedCategory}`
+
+    const botPreviewText = lastBotMsg
+      ? lastBotMsg.text.substring(0, 50) + (lastBotMsg.text.length > 50 ? '...' : '')
+      : 'Waiting for Rundi AI response...'
+
+    const nextPreview = `Rundi AI: ${botPreviewText}`
+
+    const nextStateKey = stableStringify(nextState)
+    const currentStateKey = stableStringify({
+      chatHistory: currentSession?.state?.chatHistory,
+      selectedCategory: currentSession?.state?.selectedCategory,
+      backendSessionId: currentSession?.state?.backendSessionId,
+    })
+
+    const payloadKey = `${currentSession.id}|${nextTitle}|${nextPreview}|${nextStateKey}`
+    if (lastSentRef.current === payloadKey) return
+
     const timer = setTimeout(() => {
-      const bId = currentSession?.state?.backendSessionId
-      const state = { chatHistory, selectedCategory, backendSessionId: bId }
-      const lastBotMsg = [...chatHistory].reverse().find((msg) => msg.sender === 'Rundi AI' && msg.text?.trim())
+      const titleChanged = currentSession.title !== nextTitle
+      const previewChanged = currentSession.preview !== nextPreview
+      const stateChanged = currentStateKey !== nextStateKey
 
-      const title = lastBotMsg
-        ? lastBotMsg.text.length > 25
-          ? lastBotMsg.text.substring(0, 25) + '...'
-          : lastBotMsg.text
-        : `Chat: ${selectedCategory}`
+      if (!titleChanged && !previewChanged && !stateChanged) return
 
-      const botPreviewText = lastBotMsg
-        ? lastBotMsg.text.substring(0, 50) + (lastBotMsg.text.length > 50 ? '...' : '')
-        : 'Waiting for Rundi AI response...'
-      const preview = `Rundi AI: ${botPreviewText}`
-
-      if (currentSession.title !== title || JSON.stringify(currentSession.state) !== JSON.stringify(state)) {
-        updateSession(currentSession.id, {
-          state: { ...(currentSession.state || {}), ...state },
-          title,
-          preview,
-          updatedAt: new Date()
-        })
-      }
+      lastSentRef.current = payloadKey
+      safeUpdateSession(currentSession.id, {
+        state: { ...(currentSession.state || {}), ...nextState },
+        title: nextTitle,
+        preview: nextPreview,
+        updatedAt: new Date(),
+      })
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [chatHistory, selectedCategory, currentSession?.state?.backendSessionId, currentSession?.id])
+  }, [
+    currentSession?.id,
+    currentSession?.state?.backendSessionId,
+    currentSession?.title,
+    currentSession?.preview,
+    selectedCategory,
+    historySig,
+  ])
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -416,9 +453,7 @@ export default function ChatBoxInterface() {
       }
     }
 
-    if (!copied) {
-      copied = copyToClipboardFallback(text)
-    }
+    if (!copied) copied = copyToClipboardFallback(text)
 
     if (copied) {
       setCopiedId(id)
@@ -431,10 +466,7 @@ export default function ChatBoxInterface() {
   }
 
   const handleShare = async (msg: ChatMsg) => {
-    const shareData = {
-      title: 'Rundi AI Message',
-      text: msg.text,
-    }
+    const shareData = { title: 'Rundi AI Message', text: msg.text }
 
     try {
       if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
@@ -443,16 +475,11 @@ export default function ChatBoxInterface() {
       }
 
       const copied = await copyToClipboard(msg.text, msg.id)
-      if (!copied) {
-        window.prompt('Copy this message:', msg.text)
-      }
+      if (!copied) window.prompt('Copy this message:', msg.text)
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return
-
       const copied = await copyToClipboard(msg.text, msg.id)
-      if (!copied) {
-        window.prompt('Copy this message:', msg.text)
-      }
+      if (!copied) window.prompt('Copy this message:', msg.text)
     }
   }
 
@@ -463,12 +490,10 @@ export default function ChatBoxInterface() {
 
   const saveEdit = (id: number) => {
     if (!editedMessageContent.trim()) return
-
     setChatHistory((prev) => prev.map((msg) => (msg.id === id ? { ...msg, text: editedMessageContent } : msg)))
     const newText = editedMessageContent
     setEditingMessageId(null)
     setEditedMessageContent('')
-
     sendMessage(newText)
   }
 
@@ -495,11 +520,9 @@ export default function ChatBoxInterface() {
 
     const session = currentSession ?? createNewSession(activePage)
     if (!session) return
-
     if (sendLock.current) return
 
     sendLock.current = true
-
     if (showWelcome) setShowWelcome(false)
 
     const userID = FIXED_BACKEND_USER_ID
@@ -514,7 +537,7 @@ export default function ChatBoxInterface() {
 
     setChatHistory((prev) => {
       const next = [...prev, userChat]
-      updateSession(session.id, {
+      safeUpdateSession(session.id, {
         state: {
           ...(session.state || {}),
           chatHistory: next,
@@ -525,11 +548,11 @@ export default function ChatBoxInterface() {
       })
       return next
     })
+
     setInput('')
     setLoading(true)
 
     const { domain, category } = getCategoryMetadata(selectedCategory, t)
-
     let currentBackendId = session?.state?.backendSessionId
 
     try {
@@ -537,10 +560,7 @@ export default function ChatBoxInterface() {
         const sessionRes = await fetch('/api/session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: userID,
-            first_message: text,
-          }),
+          body: JSON.stringify({ user_id: userID, first_message: text }),
         })
 
         const sessionData = await sessionRes.json().catch(() => ({}))
@@ -549,12 +569,9 @@ export default function ChatBoxInterface() {
         }
 
         currentBackendId = sessionData.session_id || sessionData.id || sessionData?.data?.session_id || null
+        if (!currentBackendId) throw new Error('Backend did not return a session id')
 
-        if (!currentBackendId) {
-          throw new Error('Backend did not return a session id')
-        }
-
-        updateSession(session.id, {
+        safeUpdateSession(session.id, {
           state: {
             ...(session.state || {}),
             chatHistory: session.state?.chatHistory || [],
@@ -565,22 +582,11 @@ export default function ChatBoxInterface() {
         })
       }
 
-
-      const payload = {
-        message: text,
-        domain: domain,
-        category: category,
-        language: "rn",
-        user_id: userID,
-        session_id: currentBackendId
-      }
-
-      console.log('Final API Payload from UI:', payload)
-
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+      const payload = { message: text, domain, category, language: 'rn', user_id: userID, session_id: currentBackendId }
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
@@ -590,24 +596,17 @@ export default function ChatBoxInterface() {
 
       const data = await response.json()
       let answer = data.answer || data.reply || data.message || JSON.stringify(data)
-
-
       answer = answer.replace(/<(think|thought|regex)>[\s\S]*?<\/\1>/gi, '').trim()
 
       const botChatId = Date.now() + 1
-      const botChat: ChatMsg = {
-        id: botChatId,
-        text: answer,
-        sender: 'Rundi AI',
-        timestamp: nowTime(),
-        category: selectedCategory,
-      }
+      const botChat: ChatMsg = { id: botChatId, text: answer, sender: 'Rundi AI', timestamp: nowTime(), category: selectedCategory }
 
       setIsTyping(true)
       setActiveBotId(botChatId)
+
       setChatHistory((prev) => {
         const next = [...prev, botChat]
-        updateSession(session.id, {
+        safeUpdateSession(session.id, {
           state: {
             ...(session.state || {}),
             chatHistory: next,
@@ -628,7 +627,7 @@ export default function ChatBoxInterface() {
       }
       setChatHistory((prev) => {
         const next = [...prev, botChat]
-        updateSession(session.id, {
+        safeUpdateSession(session.id, {
           state: {
             ...(session.state || {}),
             chatHistory: next,
@@ -657,19 +656,20 @@ export default function ChatBoxInterface() {
   }
 
   return (
-    <div className="flex-1 h-[calc(100vh-3.5rem)] flex flex-col bg-gray-900">
+    <div className="flex-1 h-[calc(100vh-3.5rem)] flex flex-col bg-background">
       {showWelcome ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 bg-black">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 bg-background">
           <div className="w-full max-w-3xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="text-center space-y-6 sm:space-y-8">
-              <div className="mx-auto flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl sm:rounded-3xl bg-background shadow-lg shadow-[#147E4E]/20 dark:shadow-none transition-transform duration-200 hover:scale-105">
-                <Bot className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
+              <div className="mx-auto flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-background border border-border shadow-sm transition-transform duration-200 hover:scale-105">
+                <Bot className="h-8 w-8 sm:h-10 sm:w-10 text-[#147E4E]" />
               </div>
               <div className="space-y-3">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">{t.welcome}</h1>
-                <p className="text-base sm:text-lg md:text-xl text-gray-500 dark:text-gray-400 tracking-normal leading-relaxed max-w-2xl mx-auto">{t.subtitle}</p>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground dark:text-gray-100 tracking-tight">{t.welcome}</h1>
+                <p className="text-base sm:text-lg md:text-xl text-muted-foreground dark:text-gray-400 tracking-normal leading-relaxed max-w-2xl mx-auto">{t.subtitle}</p>
               </div>
             </div>
+
             <InputArea
               input={input}
               setInput={setInput}
@@ -697,37 +697,38 @@ export default function ChatBoxInterface() {
         <>
           <input type="file" ref={fileInputRef} onChange={onFileChange} className="hidden" />
 
-          <div className="flex-1 overflow-y-auto px-2 sm:px-4 md:px-6 pt-2 sm:pt-3 pb-4 sm:pb-6 custom-scrollbar bg-black">
+          <div className="flex-1 overflow-y-auto px-2 sm:px-4 md:px-6 pt-2 sm:pt-3 pb-4 sm:pb-6 custom-scrollbar bg-background">
             <div className="mx-auto max-w-3xl flex flex-col gap-2 sm:gap-3 md:gap-4">
               {chatHistory.map((msg) => (
                 <div key={msg.id} className={`flex w-full ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[85%] md:max-w-[75%] lg:max-w-[65%] ${msg.sender === 'Rundi AI' ? 'w-full' : ''}`}>
                     <div
-                      className={`rounded-2xl text-sm ${msg.sender === 'user'
-                        ? 'bg-[#1565C0] text-white px-4 py-2 shadow-sm w-fit break-words ml-auto'
-                        : 'bg-transparent text-slate-900 dark:text-gray-100 px-0 py-1'
-                        }`}
+                      className={`rounded-3xl text-sm ${
+                        msg.sender === 'user'
+                          ? 'bg-[#147E4E] text-white px-5 py-2.5 shadow-sm w-fit break-words ml-auto'
+                          : 'bg-transparent text-foreground dark:text-gray-100 px-0 py-1'
+                      }`}
                     >
                       {editingMessageId === msg.id ? (
-                        <div className="w-full bg-card border border-slate-200 dark:border-[#147E4E]/30 rounded-2xl shadow-lg ring-1 ring-black/5 p-2 sm:p-3 transition-all animate-in fade-in zoom-in-95 duration-200">
+                        <div className="w-full bg-card border border-border dark:border-[#147E4E]/30 rounded-2xl shadow-lg ring-1 ring-black/5 p-2 sm:p-3 transition-all animate-in fade-in zoom-in-95 duration-200">
                           <textarea
                             value={editedMessageContent}
                             onChange={(e) => setEditedMessageContent(e.target.value)}
-                            className="w-full bg-transparent text-slate-900 dark:text-white rounded-xl p-3 text-sm focus:outline-none resize-none min-h-[100px] sm:min-h-[120px]"
+                            className="w-full bg-transparent text-foreground dark:text-white rounded-xl p-3 text-sm focus:outline-none resize-none min-h-[100px] sm:min-h-[120px]"
                             autoFocus
                             placeholder="Edit your message..."
                           />
-                          <div className="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-slate-100 dark:border-gray-800">
+                          <div className="flex items-center justify-end gap-2 mt-2 pt-2 border-t border-border">
                             <button
                               onClick={cancelEdit}
-                              className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-xl text-slate-500 transition text-xs font-medium"
+                              className="flex items-center gap-2 px-3 py-1.5 hover:bg-accent dark:hover:bg-gray-800 rounded-xl text-muted-foreground transition text-xs font-medium"
                             >
                               <X className="w-3.5 h-3.5" />
                               <span className="hidden sm:inline">Cancel</span>
                             </button>
                             <button
                               onClick={() => saveEdit(msg.id)}
-                              className="flex items-center gap-2 px-4 py-1.5 bg-[#1565C0] text-white rounded-xl hover:bg-[#0D47A1] transition text-xs font-medium shadow-sm shadow-[#1565C0]/20"
+                              className="flex items-center gap-2 px-4 py-1.5 bg-[#147E4E] text-white rounded-full hover:bg-[#116A41] transition text-xs font-medium shadow-sm"
                             >
                               <Send className="w-3.5 h-3.5" />
                               <span>Save & Resend</span>
@@ -742,14 +743,11 @@ export default function ChatBoxInterface() {
                     </div>
 
                     {!editingMessageId && (
-                      <div
-                        className={`mt-1 flex items-center gap-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'
-                          }`}
-                      >
+                      <div className={`mt-1 flex items-center gap-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => copyToClipboard(msg.text, msg.id)}
-                            className="p-1.5 sm:p-2 hover:bg-[#147E4E]/10 dark:hover:bg-white/5 rounded-md transition-colors text-gray-400 dark:text-gray-500 hover:text-[#147E4E] dark:hover:text-white"
+                            className="p-1.5 sm:p-2 hover:bg-[#147E4E]/10 dark:hover:bg-white/5 rounded-md transition-colors text-muted-foreground dark:text-gray-500 hover:text-[#147E4E] dark:hover:text-white"
                             title="Copy"
                           >
                             {copiedId === msg.id ? (
@@ -762,7 +760,7 @@ export default function ChatBoxInterface() {
                           {msg.sender === 'Rundi AI' ? (
                             <button
                               onClick={() => handleShare(msg)}
-                              className="p-1.5 sm:p-2 hover:bg-[#147E4E]/10 dark:hover:bg-white/5 rounded-md transition-colors text-gray-400 dark:text-gray-500 hover:text-[#147E4E] dark:hover:text-white"
+                              className="p-1.5 sm:p-2 hover:bg-[#147E4E]/10 dark:hover:bg-white/5 rounded-md transition-colors text-muted-foreground dark:text-gray-500 hover:text-[#147E4E] dark:hover:text-white"
                               title="Share"
                             >
                               <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -770,7 +768,7 @@ export default function ChatBoxInterface() {
                           ) : (
                             <button
                               onClick={() => handleEdit(msg)}
-                              className="p-1.5 sm:p-2 hover:bg-[#147E4E]/10 dark:hover:bg-white/5 rounded-md transition-colors text-gray-400 dark:text-gray-500 hover:text-[#147E4E] dark:hover:text-white"
+                              className="p-1.5 sm:p-2 hover:bg-[#147E4E]/10 dark:hover:bg-white/5 rounded-md transition-colors text-muted-foreground dark:text-gray-500 hover:text-[#147E4E] dark:hover:text-white"
                               title="Edit"
                             >
                               <Pencil className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -778,7 +776,7 @@ export default function ChatBoxInterface() {
                           )}
                         </div>
 
-                        <div className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500">
+                        <div className="text-[10px] sm:text-xs text-muted-foreground dark:text-gray-500">
                           {msg.timestamp} • {msg.category}
                         </div>
                       </div>

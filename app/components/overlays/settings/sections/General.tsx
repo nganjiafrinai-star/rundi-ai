@@ -8,10 +8,10 @@ export default function GeneralSection() {
     const { theme, setTheme } = useTheme()
     const { language, setLanguage, t } = useLanguage()
 
-    const BORDER = 'border border-black/10 dark:border-white/10'
-    const SOFT = 'bg-black/[0.03] dark:bg-white/[0.05]'
-    const TEXT = 'text-[#111111] dark:text-white'
-    const MUTED = 'text-black/60 dark:text-white/65'
+    const BORDER = 'border border-border'
+    const SOFT = 'bg-muted'
+    const TEXT = 'text-foreground'
+    const MUTED = 'text-muted-foreground'
     const ACCENT = '#147E4E'
 
     return (
@@ -22,14 +22,14 @@ export default function GeneralSection() {
 
             <div className="space-y-4">
                 <div className="space-y-2">
-                    <label className={`text-xs font-semibold ${MUTED} flex items-center gap-2`}>
+                    <label className={`text-xs font-semibold ${MUTED} flex items-center gap-2 px-1`}>
                          {t.appLanguage}
                     </label>
-                    <div className={`relative rounded ${BORDER} ${SOFT} overflow-hidden`}>
+                    <div className={`relative rounded-full border border-border bg-input overflow-hidden hover:bg-input-hover transition-colors focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background`}>
                         <select
                             value={language}
                             onChange={(e) => setLanguage(e.target.value as any)}
-                            className={`w-full bg-gray-800 px-4 py-3 text-sm font-medium outline-none appearance-none ${TEXT} cursor-pointer`}
+                            className={`w-full bg-transparent px-4 py-3 text-sm font-medium outline-none appearance-none ${TEXT} cursor-pointer`}
                         >
                             <option value="rn">Kirundi</option>
                             <option value="en">English</option>
@@ -44,25 +44,30 @@ export default function GeneralSection() {
                 </div>
 
                 <div className="space-y-4">
-                    <label className={`text-xs font-semibold ${MUTED}`}>{t.appearance}</label>
-                    <div className="grid grid-cols-2 gap-2">
-                        {[
-                            { id: 'light', icon: Sun, label: t.light },
-                            { id: 'dark', icon: Moon, label: t.dark },
-                        ].map((item) => (
-                            <button
+                    <label className={`text-xs font-semibold ${MUTED} px-1`}>{t.appearance}</label>
+                         <div className="grid grid-cols-2 gap-2">
+                            {[
+                                { id: 'light', icon: Sun, label: t.light },
+                                { id: 'dark', icon: Moon, label: t.dark },
+                            ].map((item) => (
+                                <button
                                 key={item.id}
                                 onClick={() => setTheme(item.id)}
-                                className={`flex items-center justify-center gap-2 p-4 rounded border transition-all ${theme === item.id
-                                    ? `border-[#147E4E] bg-[#147E4E]/5 text-[#147E4E]`
-                                    : `${BORDER} ${SOFT} hover:bg-black/[0.06] dark:hover:bg-white/10 ${TEXT} cursor-pointer`
-                                    }`}
-                            >
+                                className={[
+                                    "flex items-center justify-center gap-2 p-4 rounded-xl border transition-all duration-200",
+                                    theme === item.id
+                                    ? "border-[#147E4E] bg-[#147E4E]/10 text-[#147E4E]"
+                                    : "border-border bg-muted text-foreground hover:bg-accent cursor-pointer"
+                                ].join(" ")}
+                                >
                                 <item.icon className="w-4 h-4 shrink-0" />
-                                <span className="text-sm font-medium whitespace-nowrap">{item.label}</span>
-                            </button>
-                        ))}
-                    </div>
+                                <span className="text-sm font-medium whitespace-nowrap">
+                                    {item.label}
+                                </span>
+                                </button>
+                            ))}
+                        </div>
+
                 </div>
             </div>
         </section>

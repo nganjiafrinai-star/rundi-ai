@@ -5,10 +5,10 @@ import "../globals.css"
 
 const Footer = () => {
     return (
-        <footer className="bg-white dark:bg-gray-950 text-gray-700 dark:text-gray-300 py-16 border-t border-gray-200 dark:border-white/10 transition-all duration-200">
+        <footer className="bg-background text-foreground py-16 border-t border-border transition-all duration-200">
             <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10">
                 <div>
-                    <Link href="/dashboard" className="text-1.5xl font-bold text-[#111111] dark:text-white mb-4">RUNDI AI</Link>
+                    <Link href="/dashboard" className="text-1.5xl font-bold text-foreground mb-4">RUNDI AI</Link>
                     <p className="text-sm leading-relaxed opacity-80">
                         Ibiboneka vyose kuri Rundi AI.
                         Izere ubuhinga bugezweho mu rurimi rwacu.
@@ -16,34 +16,34 @@ const Footer = () => {
                 </div>
 
                 <div>
-                    <h3 className="text-lg font-semibold mb-4 text-[#111111] dark:text-white">SaaS Plateforme</h3>
+                    <h3 className="text-lg font-semibold mb-4 text-foreground">SaaS Plateforme</h3>
                     <ul className="space-y-2 text-sm">
                         <li>
-                            <a href="/careers" className="hover:text-[#28C766] transition">
+                            <Link href="/careers" className="hover:text-[#147E4E] transition">
                                 Carrière
-                            </a>
+                            </Link>
                         </li>
                         <li>
-                            <a href="/security" className="hover:text-[#28C766] transition">
+                            <Link href="/security" className="hover:text-[#147E4E] transition">
                                 Sécurité & Confiance
-                            </a>
+                            </Link>
                         </li>
                         <li>
-                            <a href="/faq" className="hover:text-[#28C766] transition">
+                            <Link href="/faq" className="hover:text-[#147E4E] transition">
                                 FAQ
-                            </a>
+                            </Link>
                         </li>
                         <li>
-                            <a href="/utilisation" className="hover:text-[#28C766] transition">
+                            <Link href="/utilisation" className="hover:text-[#147E4E] transition">
                                 Utilisation
-                            </a>
+                            </Link>
                         </li>
                     </ul>
                 </div>
 
 
                 <div>
-                    <h3 className="text-lg font-semibold mb-4 text-[#111111] dark:text-white">Contact</h3>
+                    <h3 className="text-lg font-semibold mb-4 text-foreground">Contact</h3>
                     <ul className="space-y-2 text-sm">
                         <li>
                             <p>

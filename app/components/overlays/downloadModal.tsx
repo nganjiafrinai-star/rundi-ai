@@ -12,13 +12,13 @@ export default function DownloadModal() {
     <Modal title={t.downloadApp} onClose={closeModal} size="md">
       <div className="flex flex-col bg-card items-center text-center space-y-6 py-4">
         <div className="space-y-2">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t.getApp}</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+          <h3 className="text-lg font-bold text-foreground">{t.getApp}</h3>
+          <p className="text-sm text-muted-foreground max-w-xs">
             {t.scanQR}
           </p>
         </div>
 
-        <div className="p-4 bg-background rounded-2xl shadow-sm border border-border">
+        <div className="p-4 bg-background rounded-3xl shadow-sm border border-border">
 
           <svg
             className="w-48 h-48 text-[#147E4E]"
