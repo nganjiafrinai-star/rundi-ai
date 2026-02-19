@@ -120,7 +120,7 @@ const WeatherCard = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search city or country..."
-            className="w-full bg-white/10 border border-white/20 hover:border-white/40 focus:border-white/60 rounded-full py-1.5 pl-9 pr-4 text-[10px] text-white placeholder:text-blue-100/60 focus:outline-none transition-all"
+            className="w-full bg-white/10 border border-white/20 hover:border-white/40 focus:border-white/60 rounded-full py-1.5 pl-9 pr-4 text-sm text-white placeholder:text-blue-100/60 focus:outline-none transition-all"
           />
           <Search className="w-3.5 h-3.5 text-blue-100/60 absolute left-3 top-1/2 -translate-y-1/2" />
           {loading && (
@@ -701,10 +701,10 @@ export default function DiscoverInterface() {
                         <span className="inline-block px-3 py-1 bg-green-600 text-xs font-bold rounded mb-3 tracking-wider uppercase">
                           Featured: {featuredArticle.category}
                         </span>
-                        <h1 className="text-2xl md:text-3xl font-bold mb-3 leading-tight">
+                        <h1 className="text-2xl md:text-3xl font-semibold mb-3 leading-tight tracking-tight">
                           {featuredArticle.title}
                         </h1>
-                        <p className="text-gray-200 mb-4 line-clamp-2 text-base opacity-90">
+                        <p className="text-gray-200 mb-4 line-clamp-2 text-lg leading-7 opacity-90">
                           {featuredArticle.description}
                         </p>
 
@@ -759,10 +759,10 @@ export default function DiscoverInterface() {
                         </span>
                       </div>
                       <div className="p-5">
-                        <h3 className="text-base font-bold text-foreground dark:text-white mb-2 line-clamp-2 group-hover:text-green-600 dark:group-hover:text-green-500 transition-colors leading-snug">
+                        <h3 className="text-lg font-medium text-foreground dark:text-white mb-2 line-clamp-2 group-hover:text-green-600 dark:group-hover:text-green-500 transition-colors leading-6">
                           {article.title}
                         </h3>
-                        <p className="text-xs text-muted-foreground dark:text-gray-400 mb-3 line-clamp-2 leading-relaxed opacity-80">
+                        <p className="text-sm text-muted-foreground dark:text-gray-400 mb-3 line-clamp-2 leading-6 opacity-80">
                           {article.description}
                         </p>
                         <div className="flex items-center justify-between">
@@ -819,10 +819,10 @@ export default function DiscoverInterface() {
                     )}
                   </div>
                   <div className="p-4">
-                    <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-green-600 transition-colors">
+                    <h3 className="text-base font-medium text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-green-600 transition-colors leading-6">
                       {article.title}
                     </h3>
-                    <div className="text-[10px] text-gray-500 line-clamp-1">{article.source} • {article.date}</div>
+                    <div className="text-sm text-gray-500 line-clamp-1">{article.source} • {article.date}</div>
                   </div>
                 </Link>
               ))}

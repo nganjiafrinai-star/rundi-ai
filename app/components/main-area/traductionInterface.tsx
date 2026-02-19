@@ -351,7 +351,7 @@ export default function TraductionInterface() {
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 placeholder={t.placeholder}
                 className={`w-full h-[220px] resize-none rounded-2xl p-4 outline-none 
-                  bg-input border border-border ${TEXT} transition-all
+                  bg-input dark:bg-gray-800 dark:border-[#147E4E]/20  border border-border ${TEXT} transition-all
                   placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background`}
                 maxLength={4000}
               />

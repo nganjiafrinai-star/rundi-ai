@@ -19,7 +19,6 @@ export async function POST(req: NextRequest) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-        // Call backend login/authentication endpoint
         const response = await fetch("http://192.168.1.223:800/auth/login", {
             method: "POST",
             headers: {

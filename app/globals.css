@@ -90,29 +90,97 @@
     @apply border-border outline-ring/50;
   }
 
+  /* ChatGPT-like typography base */
   html {
     scroll-behavior: smooth;
     font-size: 16px;
+    font-feature-settings: "kern", "liga", "clig", "calt";
   }
 
   @media (min-width: 640px) {
     html {
-      font-size: 17px;
+      font-size: 16px; /* Keep consistent for better readability */
     }
   }
 
   @media (min-width: 1024px) {
     html {
-      font-size: 19px;
+      font-size: 16px; /* Keep consistent for ChatGPT-like experience */
     }
   }
 
   body {
     @apply bg-background text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    /* ChatGPT-style typography */
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px; /* ChatGPT base size */
+    line-height: 1.6; /* Comfortable reading */
+    font-weight: 400;
+    letter-spacing: -0.01em; /* Slight tightening for modern look */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+  }
+
+  /* ChatGPT-like text sizing */
+  .text-chat-base {
+    font-size: 16px;
+    line-height: 1.7;
+    max-width: 800px; /* ChatGPT reading width */
+  }
+
+  .text-chat-message {
+    font-size: 16px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-width: 700px;
+  }
+
+  /* Improved heading hierarchy */
+  h1 {
+    font-size: 1.5rem; /* 24px */
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.02em;
+  }
+
+  h2 {
+    font-size: 1.25rem; /* 20px */
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-size: 1.125rem; /* 18px */
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  /* Better button typography */
+  button {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+
+  /* Input field improvements */
+  input, textarea {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* Ensure mobile readability */
+  @media (max-width: 640px) {
+    body {
+      font-size: 15px; /* Never go below 15px for readability */
+    }
+    
+    .text-chat-base, .text-chat-message {
+      font-size: 15px;
+      line-height: 1.6;
+    }
   }
 
   @media (max-width: 1023px) {

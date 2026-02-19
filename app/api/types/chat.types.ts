@@ -10,10 +10,9 @@ export interface ChatMessage {
     sender: 'user' | 'Rundi AI'
     timestamp: string
     category?: string
-    // New fields for edit/reply functionality
-    parentId?: number | null          // For assistant replies: id of the user message it answers
-    editedAt?: number | null          // Timestamp when message was last edited
-    status?: MessageStatus            // 'sent', 'pending', or 'error'
+    parentId?: number | null     
+    editedAt?: number | null          
+    status?: MessageStatus            
 }
 
 export interface ChatRequest {

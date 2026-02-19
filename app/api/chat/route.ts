@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     const controller = new AbortController();
-    const timeoutMs = 120_000; // 2 minutes
+    const timeoutMs = 120_000; 
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     const response = await fetch("http://192.168.1.223:800/chat/", {

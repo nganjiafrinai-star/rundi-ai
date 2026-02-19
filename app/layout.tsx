@@ -3,6 +3,7 @@
 import { useState, Suspense, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { SessionProvider } from 'next-auth/react'
+import { Inter } from 'next/font/google'
 import { ChatProvider } from '@/app/context/chatContext'
 import { AuthProvider, useAuth } from '@/app/context/authContext'
 import { ModalProvider } from '@/app/context/modal/modalContext'
@@ -16,6 +17,13 @@ import { LanguageProvider } from '@/app/context/languageContext'
 import { NewsProvider } from '@/app/context/newsContext'
 import WhatsAppFloatingButton from '@/app/components/WhatsAppFloatingButton'
 import "./globals.css"
+
+// ChatGPT-like font setup
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+})
 
 function AppContent({ children }: { children: React.ReactNode }) {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -107,7 +115,7 @@ export default function RootLayout({
 }) {
     return (
         <html lang="rn" suppressHydrationWarning>
-            <body>
+            <body className={inter.className}>
                 <Suspense fallback={<div>Loading...</div>}>
                     <ThemeProvider
                         attribute="class"
