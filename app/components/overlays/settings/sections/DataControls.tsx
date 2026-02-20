@@ -10,6 +10,22 @@ export default function DataControlsSection() {
 
     const archivedSessions = (chatSessions || []).filter((s: any) => s.isArchived)
 
+    const handleClearAllChats = () => {
+        const allSessions = chatSessions || []
+        if (allSessions.length === 0) return
+
+        const confirmed = window.confirm(
+            `Are you sure you want to delete ALL ${allSessions.length} chat conversations? This action cannot be undone.`
+        )
+        
+        if (confirmed) {
+            // Delete all sessions one by one
+            allSessions.forEach((session: any) => {
+                deleteSession(session.id)
+            })
+        }
+    }
+
     const handleExport = (session: any) => {
         const dataStr = JSON.stringify(session, null, 2)
         const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
@@ -37,7 +53,7 @@ export default function DataControlsSection() {
             label: 'Clear All Chats',
             description: 'Permanently delete all your chat history',
             icon: Trash2,
-            onClick: () => console.log('Clearing...'),
+            onClick: handleClearAllChats,
             danger: true,
         },
         {

@@ -5,8 +5,8 @@ import "../globals.css"
 
 const Footer = () => {
     return (
-        <footer className="bg-background text-foreground py-16 border-t border-border transition-all duration-200">
-            <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10">
+        <footer className="bg-background text-foreground py-6 border-t border-border transition-all duration-200">
+            <div className="max-w-7xl mx-auto px-6 py-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10">
                 <div>
                     <Link href="/dashboard" className="text-1.5xl font-bold text-foreground mb-4">RUNDI AI</Link>
                     <p className="text-sm leading-relaxed opacity-80">
@@ -16,7 +16,7 @@ const Footer = () => {
                 </div>
 
                 <div>
-                    <h3 className="text-lg font-semibold mb-4 text-foreground">SaaS Plateforme</h3>
+                    <h3 className="text-lg font-semibold mb-4 text-foreground">Plateforme</h3>
                     <ul className="space-y-2 text-sm">
                         <li>
                             <Link href="/careers" className="hover:text-[#147E4E] transition">
@@ -87,7 +87,7 @@ const Footer = () => {
                     </div>
                 </div>
             </div>
-            <div className="p-6 pb-[-6px] border-t border-black/10 dark:border-white/10 pt-6 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-5 text-sm opacity-60">
+            <div className="border-t border-black/10 dark:border-white/10 pt-6 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-5 text-sm opacity-60">
                 <p>&copy; {new Date().getFullYear()} AFRINAI. Tous droits réservés.</p>
                 <div className="flex space-x-5">
                     <a href="/condition" className="hover:text-[#28C766] transition">

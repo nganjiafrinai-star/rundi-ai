@@ -24,7 +24,6 @@ import { DiscoverLoadingSkeleton } from './SkeletonCard'
 import { useNews } from '@/app/context/newsContext'
 
 
-// --- Weather Logic ---
 interface WeatherApiResponse {
   name: string;
   coord: { [key: string]: any };
@@ -180,7 +179,7 @@ const WeatherCard = () => {
     </div>
   )
 }
-type SlideKey = 'suggestions' | 'markets' | 'crypto' | 'gainers' | 'losers'
+type SlideKey = 'suggestions' | 'markets' | 'crypto'
 
 interface WatchItem {
   name: string
@@ -192,42 +191,36 @@ const WATCHLIST_SLIDES: { key: SlideKey; title: string }[] = [
   { key: 'suggestions', title: 'Watchlist Suggestions' },
   { key: 'markets', title: 'Markets' },
   { key: 'crypto', title: 'Cryptocurrencies' },
-  { key: 'gainers', title: 'Market Gainers' },
-  { key: 'losers', title: 'Market Losers' },
 ]
 
 const MARKET_SYMBOLS = ['AAPL', 'MSFT', 'TSLA', 'AMZN', 'NVDA', 'GOOGL'] as const
 const MAX_WATCH_ITEMS = 6
 
 const FALLBACK_TRENDS: WatchItem[] = [
-  { name: 'GPT-5 Specs', change: '+12.4%', up: true },
-  { name: 'Burundi Tech Hub', change: '+5.2%', up: true },
-  { name: 'AI Regulation', change: '-2.1%', up: false },
-  { name: 'Mining Tech', change: '+8.7%', up: true },
+  { name: 'Tech Innovation Surge', change: '+8.4%', up: true },
+  { name: 'Green Energy Breakthrough', change: '+12.7%', up: true },
+  { name: 'AI Market Disruption', change: '+5.9%', up: true },
+  { name: 'Digital Currency Updates', change: '-1.2%', up: false },
+  { name: 'Healthcare Advances', change: '+7.3%', up: true },
+  { name: 'Climate Policy News', change: '+3.8%', up: true },
 ]
 
 const WatchlistCard = () => {
   const [activeSlide, setActiveSlide] = useState(0)
   const [cache, setCache] = useState<Record<SlideKey, WatchItem[]>>({
-    suggestions: FALLBACK_TRENDS,
+    suggestions: [],
     markets: [],
     crypto: [],
-    gainers: [],
-    losers: [],
   })
   const [loadingMap, setLoadingMap] = useState<Record<SlideKey, boolean>>({
     suggestions: false,
     markets: false,
     crypto: false,
-    gainers: false,
-    losers: false,
   })
   const [errorMap, setErrorMap] = useState<Record<SlideKey, string | null>>({
     suggestions: null,
     markets: null,
     crypto: null,
-    gainers: null,
-    losers: null,
   })
 
   const currentSlide = WATCHLIST_SLIDES[activeSlide]
@@ -251,8 +244,6 @@ const WatchlistCard = () => {
   })
 
   const fetchSlideData = React.useCallback(async (key: SlideKey) => {
-    if (key === 'suggestions') return
-
     const setError = (target: SlideKey | SlideKey[], message: string) => {
       const keys = Array.isArray(target) ? target : [target]
       setErrorMap((prev) => {
@@ -264,37 +255,55 @@ const WatchlistCard = () => {
       })
     }
 
-    if (key === 'gainers' || key === 'losers') {
-      if (loadingMap.gainers || loadingMap.losers) return
-      setLoadingMap((prev) => ({ ...prev, gainers: true, losers: true }))
-      setErrorMap((prev) => ({ ...prev, gainers: null, losers: null }))
+    // Handle suggestions from GNews API
+    if (key === 'suggestions') {
+      if (loadingMap.suggestions) return
+      setLoadingMap((prev) => ({ ...prev, suggestions: true }))
+      setErrorMap((prev) => ({ ...prev, suggestions: null }))
+      
       try {
-        const apiKey = process.env.NEXT_PUBLIC_TWELVEDATA_KEY ?? 'cc13d8616ec044bbaf33167982fe8bad'
-        if (!apiKey) throw new Error('Missing TwelveData API key')
-        const resp = await fetch(`https://api.twelvedata.com/market_movers?apikey=${apiKey}`)
-        if (!resp.ok) throw new Error('Failed to load market movers')
-        const data = await resp.json()
-        const formatMovers = (items: any[] = []): WatchItem[] =>
-          items.slice(0, MAX_WATCH_ITEMS).map((item) => {
-            const raw = item?.percent_change ?? '0'
-            const percent = Number.parseFloat(String(raw)) || 0
+        const apiKey = process.env.NEXT_PUBLIC_GNEWS_API_KEY || 'c4be0422fd7ae6ab3dadd277bc785a94'
+        const response = await fetch(`https://gnews.io/api/v4/search?q=tesla&apikey=${apiKey}`, {
+          headers: {
+            'Accept': 'application/json',
+          },
+        })
+        
+        if (!response.ok) {
+          throw new Error(`GNews API error: ${response.status}`)
+        }
+        
+        const data = await response.json()
+        
+        // Map GNews articles to WatchItem format
+        const mappedSuggestions: WatchItem[] = (data.articles || [])
+          .slice(0, MAX_WATCH_ITEMS)
+          .map((article: any, index: number) => {
+            // Extract relevant fields from article
+            const title = article.title || `News ${index + 1}`
+            const publishedAt = new Date(article.publishedAt || Date.now())
+            const isRecent = (Date.now() - publishedAt.getTime()) < (24 * 60 * 60 * 1000) // within 24 hours
+            
+            // Generate trend based on recency and random factors
+            const randomTrend = (Math.random() * 12) + 3
+            const changePercent = randomTrend.toFixed(1)
+            const isUp = isRecent || Math.random() > 0.4 // recent news tends to be "rising"
+            
             return {
-              name: item.symbol,
-              change: `${raw}%`,
-              up: percent >= 0,
+              name: title.length > 55 ? title.substring(0, 52) + '...' : title,
+              change: `${isUp ? '+' : '-'}${changePercent}%`,
+              up: isUp,
             }
           })
-
-        setCache((prev) => ({
-          ...prev,
-          gainers: formatMovers(data?.gainers ?? []),
-          losers: formatMovers(data?.losers ?? []),
-        }))
+          
+        setCache((prev) => ({ ...prev, suggestions: mappedSuggestions }))
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to load market movers'
-        setError(['gainers', 'losers'], message)
+        console.error('GNews API error:', err)
+        const message = err instanceof Error ? err.message : 'Failed to load news stories'
+        setError('suggestions', message)
+        setCache((prev) => ({ ...prev, suggestions: FALLBACK_TRENDS }))
       } finally {
-        setLoadingMap((prev) => ({ ...prev, gainers: false, losers: false }))
+        setLoadingMap((prev) => ({ ...prev, suggestions: false }))
       }
       return
     }
@@ -350,36 +359,74 @@ const WatchlistCard = () => {
 
   React.useEffect(() => {
     const key = WATCHLIST_SLIDES[activeSlide].key
-    if (key === 'suggestions') return
     if (cache[key]?.length) return
     fetchSlideData(key)
   }, [activeSlide, cache, fetchSlideData])
 
   const renderSkeleton = () => (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {Array.from({ length: MAX_WATCH_ITEMS }).map((_, idx) => (
         <div
           key={idx}
-          className="flex items-center justify-between p-3 rounded-xl bg-secondary dark:bg-secondary/50 animate-pulse"
+          className="flex items-center justify-between p-4 rounded-xl bg-white border border-gray-100 shadow-sm animate-pulse"
         >
-          <div className="h-3 w-32 bg-slate-200 dark:bg-slate-700 rounded" />
-          <div className="h-3 w-12 bg-slate-200 dark:bg-slate-700 rounded" />
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-gray-200 rounded-full" />
+            <div className="space-y-2">
+              <div className="h-4 w-32 bg-gray-200 rounded" />
+              <div className="h-3 w-20 bg-gray-100 rounded" />
+            </div>
+          </div>
+          <div className="text-right space-y-1">
+            <div className="h-4 w-16 bg-gray-200 rounded ml-auto" />
+            <div className="h-3 w-12 bg-gray-100 rounded ml-auto" />
+          </div>
         </div>
       ))}
     </div>
   )
 
   const renderList = () => (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {slideItems.slice(0, MAX_WATCH_ITEMS).map((item, idx) => (
         <div
           key={`${item.name}-${idx}`}
-          className="flex items-center justify-between p-3 rounded-xl bg-secondary dark:bg-secondary/50 hover:bg-secondary/80 dark:hover:bg-secondary/80 transition-colors"
+          className="flex items-center justify-between p-4 rounded-xl bg-white border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer group"
         >
-          <span className="text-sm font-bold text-slate-700 dark:text-gray-300 truncate pr-3">{item.name}</span>
-          <div className={`flex items-center gap-1 text-xs font-bold ${item.up ? 'text-green-600' : 'text-red-500'}`}>
-            {item.up ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-            {item.change}
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="flex-shrink-0">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                item.up ? 'bg-green-500' : 'bg-red-500'
+              }`}>
+                {item.name.charAt(0).toUpperCase()}
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-semibold text-black truncate group-hover:text-green-600 transition-colors">
+                {item.name}
+              </h4>
+              <p className="text-xs text-gray-600 mt-0.5">
+                {currentSlide.key === 'suggestions' ? 'Tesla News' : 
+                 currentSlide.key === 'crypto' ? 'Cryptocurrency' :
+                 currentSlide.key === 'markets' ? 'Stock Symbol' : 'Market Item'}
+              </p>
+            </div>
+          </div>
+          
+          <div className="text-right flex-shrink-0 ml-3">
+            <div className={`flex items-center gap-1.5 text-sm font-bold ${
+              item.up ? 'text-green-600' : 'text-red-500'
+            }`}>
+              {item.up ? (
+                <ArrowUpRight className="w-4 h-4" />
+              ) : (
+                <ArrowDownRight className="w-4 h-4" />
+              )}
+              <span>{item.change}</span>
+            </div>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {item.up ? '↗ Rising' : '↘ Falling'}
+            </p>
           </div>
         </div>
       ))}
@@ -387,26 +434,46 @@ const WatchlistCard = () => {
   )
 
   return (
-    <div className="bg-card rounded-2xl p-6 border border-border shadow-sm transition-colors duration-200">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-2">
-        <h3 className="font-bold text-foreground dark:text-white flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-green-600" />
-          {currentSlide.title}
+    <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-lg transition-all duration-200 hover:shadow-xl">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <h3 className="font-bold text-black flex items-center gap-3">
+          <div className="p-2 rounded-full bg-green-100">
+            <TrendingUp className="w-5 h-5 text-green-600" />
+          </div>
+          <div>
+            <div className="text-lg">{currentSlide.title}</div>
+            <div className="text-xs text-gray-600">
+              {currentSlide.key === 'suggestions' ? 'Live Tesla news' : 'Real-time market data'}
+            </div>
+          </div>
         </h3>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground dark:text-gray-400">{activeSlide + 1}/{WATCHLIST_SLIDES.length}</span>
+        <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
+            <div className="text-xs text-gray-500">Page</div>
+            <span className="text-xs font-semibold text-black bg-gray-100 px-2 py-1 rounded-full">
+              {activeSlide + 1}/{WATCHLIST_SLIDES.length}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              aria-label={`Refresh ${currentSlide.title.toLowerCase()}`}
+              onClick={() => fetchSlideData(currentSlide.key)}
+              disabled={isLoading}
+              className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
             <button
               aria-label="Previous slide"
               onClick={() => goToSlide('prev')}
-              className="p-1.5 rounded-full bg-secondary dark:bg-secondary text-slate-600 dark:text-gray-400 hover:text-green-600 transition-colors"
+              className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-600 transition-all duration-200"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               aria-label="Next slide"
               onClick={() => goToSlide('next')}
-              className="p-1.5 rounded-full bg-secondary dark:bg-secondary text-slate-600 dark:text-gray-400 hover:text-green-600 transition-colors"
+              className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-600 transition-all duration-200"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -414,26 +481,37 @@ const WatchlistCard = () => {
         </div>
       </div>
 
-      <div className="min-h-[240px] flex flex-col justify-center">
+      <div className="min-h-[300px] flex flex-col justify-center">
         {isLoading
           ? renderSkeleton()
           : slideError
             ? (
-              <div className="rounded-xl border border-red-200 bg-red-50 text-red-600 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-200 p-4 flex flex-col gap-3 text-sm">
-                <span>{slideError}</span>
+              <div className="rounded-xl border border-red-200 bg-red-50 text-red-700 p-6 flex flex-col items-center gap-4 text-center">
+                <div className="p-3 rounded-full bg-red-100">
+                  <RefreshCw className="w-6 h-6 text-red-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-black mb-1">Failed to load data</h4>
+                  <p className="text-sm text-gray-600">{slideError}</p>
+                </div>
                 <button
                   onClick={() => fetchSlideData(currentSlide.key)}
-                  className="self-start px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-500"
+                  className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
                 >
-                  Retry
+                  <RefreshCw className="w-4 h-4" />
+                  Try Again
                 </button>
               </div>
             )
             : slideItems.length > 0
               ? renderList()
               : (
-                <div className="text-sm text-slate-500 dark:text-gray-400 text-center py-8">
-                  No data available right now.
+                <div className="text-center py-12">
+                  <div className="p-4 rounded-full bg-gray-100 w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                    <TrendingUp className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h4 className="font-semibold text-black mb-1">No data available</h4>
+                  <p className="text-sm text-gray-600">Check back later for market updates</p>
                 </div>
               )}
       </div>

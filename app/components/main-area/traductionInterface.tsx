@@ -37,10 +37,25 @@ export default function TraductionInterface() {
   const [suggestions, setSuggestions] = useState<DictionaryEntry[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [isSearchingSuggestions, setIsSearchingSuggestions] = useState(false)
+  
+  const sourceTextareaRef = useRef<HTMLTextAreaElement>(null)
 
   const justSwapped = useRef(false)
 
   const otherLangs = useMemo<NonKirundiLang[]>(() => ['Français', 'English', 'Swahili'], [])
+
+  // Auto-resize textarea function
+  const autoResize = (textarea: HTMLTextAreaElement) => {
+    textarea.style.height = 'auto'
+    textarea.style.height = `${Math.max(textarea.scrollHeight, 120)}px`
+  }
+
+  // Handle source text change with auto-resize
+  const handleSourceTextChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setSourceText(e.target.value)
+    setShowSuggestions(true)
+    autoResize(e.target)
+  }
 
   useEffect(() => {
     if (currentSession?.state) {
@@ -235,214 +250,207 @@ export default function TraductionInterface() {
 
 
   return (
-    <div className={`min-h-[calc(100vh-3.5rem)] p-4 md:p-6 ${BG_LIGHT} ${BG_DARK} flex flex-col`}>
-      <div className="flex-1 max-w-7xl mx-auto space-y-6">
-        <div className={`rounded ${BORDER} ${SURFACE_LIGHT} ${SURFACE_DARK} shadow-sm p-4`}>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              {isKirundiLeft ? (
-                <div className={`px-4 py-2 text-sm rounded select-none ${SOFT} ${TEXT} font-medium border border-border shadow-sm`}>
-                  Kirundi
-                </div>
-              ) : (
-                <select
-                  value={otherLang}
-                  onChange={(e: ChangeEvent<HTMLSelectElement>) => setOtherLang(e.target.value as NonKirundiLang)}
-                  className={`px-4 py-2 text-sm rounded outline-none bg-input border border-border ${TEXT} font-medium hover:bg-input-hover focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-all cursor-pointer`}
-                >
-                  {otherLangs.map((l) => (
-                    <option key={l} value={l}>
-                      {l}
-                    </option>
-                  ))}
-                </select>
-              )}
-
-              <button
-                onClick={swap}
-                className={`p-2.5 rounded hover:bg-muted dark:hover:bg-white/[0.06] transition cursor-pointer border border-border bg-card shadow-sm`}
-                title="Swap languages"
-              >
-                <ArrowLeftRight className={`w-4 h-4 ${TEXT}`} />
-              </button>
-
-              {isKirundiLeft ? (
-                <select
-                  value={otherLang}
-                  onChange={(e: ChangeEvent<HTMLSelectElement>) => setOtherLang(e.target.value as NonKirundiLang)}
-                  className={`px-4 py-2 text-sm rounded outline-none bg-input border border-border ${TEXT} font-medium hover:bg-input-hover focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-all cursor-pointer`}
-                >
-                  {otherLangs.map((l) => (
-                    <option key={l} value={l}>
-                      {l}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <div className={`px-4 py-2 text-sm rounded select-none ${SOFT} ${TEXT} font-medium border border-border shadow-sm`}>
-                  Kirundi
-                </div>
-              )}
+    <div
+  className={`min-h-[calc(100vh-3.5rem)] w-full ${BG_LIGHT} ${BG_DARK} flex flex-col p-4 md:p-6`}
+>
+  <div className="flex-1 mx-auto w-full max-w-3xl space-y-6 min-h-[75vh]">
+    <div className={`rounded ${BORDER} ${SURFACE_LIGHT} ${SURFACE_DARK} shadow-sm p-4`}>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {isKirundiLeft ? (
+            <div className={`px-4 py-2 text-sm rounded select-none ${SOFT} ${TEXT} font-medium border border-border shadow-sm`}>
+              Kirundi
             </div>
-
-
-            {isTranslating && (
-              <div className="flex items-center gap-2 text-xs text-[#147E4E] animate-pulse">
-                <span className="w-2 h-2 rounded-full bg-[#147E4E]" />
-                {t.translating || 'Translating...'}
-              </div>
-            )}
-          </div>
-
-          {translateError && (
-            <div
-              className={`mt-3 rounded ${BORDER} ${SOFT} px-3 py-2 text-xs text-red-600 dark:text-red-400`}
+          ) : (
+            <select
+              value={otherLang}
+              onChange={(e: ChangeEvent<HTMLSelectElement>) => setOtherLang(e.target.value as NonKirundiLang)}
+              className={`px-4 py-2 text-sm rounded outline-none bg-input border border-border ${TEXT} font-medium hover:bg-input-hover focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-all cursor-pointer`}
             >
-              {translateError}
+              {otherLangs.map((l) => (
+                <option key={l} value={l}>
+                  {l}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <button
+            onClick={swap}
+            className={`p-2.5 rounded hover:bg-muted dark:hover:bg-white/[0.06] transition cursor-pointer border border-border bg-card shadow-sm`}
+            title="Swap languages"
+          >
+            <ArrowLeftRight className={`w-4 h-4 ${TEXT}`} />
+          </button>
+
+          {isKirundiLeft ? (
+            <select
+              value={otherLang}
+              onChange={(e: ChangeEvent<HTMLSelectElement>) => setOtherLang(e.target.value as NonKirundiLang)}
+              className={`px-4 py-2 text-sm rounded outline-none bg-input border border-border ${TEXT} font-medium hover:bg-input-hover focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-all cursor-pointer`}
+            >
+              {otherLangs.map((l) => (
+                <option key={l} value={l}>
+                  {l}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className={`px-4 py-2 text-sm rounded select-none ${SOFT} ${TEXT} font-medium border border-border shadow-sm`}>
+              Kirundi
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className={`h-full rounded ${BORDER} ${SURFACE_LIGHT} ${SURFACE_DARK} shadow-sm overflow-hidden`}>
-            <div className="px-4 py-3 border-b border-black/10 dark:border-white/10 flex items-center justify-between">
-              <span className={`text-xs font-semibold ${TEXT}`}>{t.from}: {fromLang}</span>
-
-              <div className="flex items-center gap-1">
-
-                <button
-                  onClick={() => copyText(sourceText, 'source')}
-                  disabled={!sourceText.trim()}
-                  className="p-2 rounded hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition disabled:opacity-40"
-                  title="Copy"
-                >
-                  {copied === 'source' ? (
-                    <Check className={`w-4 h-4 ${TEXT}`} />
-                  ) : (
-                    <Copy className={`w-4 h-4 ${TEXT}`} />
-                  )}
-                </button>
-
-                <button
-                  onClick={() => shareText(sourceText, 'source', `${t.from} (${fromLang})`)}
-                  disabled={!sourceText.trim()}
-                  className="p-2 rounded-xl hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition disabled:opacity-40"
-                  title={t.share}
-                >
-                  {shared === 'source' ? (
-                    <Check className={`w-4 h-4 ${TEXT}`} />
-                  ) : (
-                    <Share2 className={`w-4 h-4 ${TEXT}`} />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div className="p-4 relative">
-              <textarea
-                value={sourceText}
-                onChange={(e) => {
-                  setSourceText(e.target.value)
-                  setShowSuggestions(true)
-                }}
-                onFocus={() => {
-                  if (suggestions.length > 0) setShowSuggestions(true)
-                }}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                placeholder={t.placeholder}
-                className={`w-full h-[220px] resize-none rounded-2xl p-4 outline-none 
-                  bg-input dark:bg-gray-800 dark:border-[#147E4E]/20  border border-border ${TEXT} transition-all
-                  placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background`}
-                maxLength={4000}
-              />
-
-              {showSuggestions && suggestions.length > 0 && fromLang === 'Kirundi' && (
-                <div className="absolute top-14 left-4 right-4 z-50 bg-card dark:bg-gray-800 border border-border/10 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                  <div className="px-3 py-1.5 bg-muted dark:bg-gray-700/50 border-b border-border/5 dark:border-white/5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground dark:text-gray-500">
-                    Suggestions
-                  </div>
-                  <div className="max-h-[200px] overflow-y-auto no-scrollbar">
-                    {suggestions.map((s) => (
-                      <button
-                        key={s.id}
-                        onMouseDown={(e) => {
-                          e.preventDefault() // Prevent blur
-                          setSourceText(s.word)
-                          setShowSuggestions(false)
-                        }}
-                        className="w-full text-left px-4 py-2.5 text-sm hover:bg-accent/10 dark:hover:bg-green-900/10 text-foreground dark:text-white border-b border-border/5 dark:border-white/5 last:border-0 transition-colors flex flex-col gap-0.5"
-                      >
-                        <div className="font-semibold text-accent dark:text-green-400">{s.word}</div>
-                        <div className="text-xs text-muted-foreground dark:text-gray-400 truncate italic">{s.meaning}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className={`flex items-center justify-between text-xs ${MUTED2} mt-1`}>
-                <span />
-                <span>{sourceText.length}/4000</span>
-              </div>
-            </div>
+        {isTranslating && (
+          <div className="flex items-center gap-2 text-xs text-[#147E4E] animate-pulse">
+            <span className="w-2 h-2 rounded-full bg-[#147E4E]" />
+            {t.translating || "Translating..."}
           </div>
+        )}
+      </div>
 
-          <div className={`h-full rounded ${BORDER} ${SURFACE_LIGHT} ${SURFACE_DARK} shadow-sm overflow-hidden`}>
-            <div className="px-4 py-3 border-b border-black/10 dark:border-white/10 flex items-center justify-between">
-              <span className={`text-xs font-semibold ${TEXT}`}>{t.to}: {toLang}</span>
+      {translateError && (
+        <div className={`mt-3 rounded ${BORDER} ${SOFT} px-3 py-2 text-xs text-red-600 dark:text-red-400`}>
+          {translateError}
+        </div>
+      )}
+    </div>
 
-              <div className="flex items-center gap-1">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* LEFT */}
+      <div className={`h-full rounded ${BORDER} ${SURFACE_LIGHT} ${SURFACE_DARK} shadow-sm overflow-hidden`}>
+        <div className="px-4 py-3 border-b border-black/10 dark:border-white/10 flex items-center justify-between">
+          <span className={`text-xs font-semibold ${TEXT}`}>
+            {t.from}: {fromLang}
+          </span>
 
-                <button
-                  onClick={() => copyText(translatedText, 'target')}
-                  disabled={!translatedText.trim()}
-                  className="p-2 rounded hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition disabled:opacity-40"
-                  title="Copy"
-                >
-                  {copied === 'target' ? (
-                    <Check className={`w-4 h-4 ${TEXT}`} />
-                  ) : (
-                    <Copy className={`w-4 h-4 ${TEXT}`} />
-                  )}
-                </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => copyText(sourceText, "source")}
+              disabled={!sourceText.trim()}
+              className="p-2 rounded hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition disabled:opacity-40"
+              title="Copy"
+            >
+              {copied === "source" ? <Check className={`w-4 h-4 ${TEXT}`} /> : <Copy className={`w-4 h-4 ${TEXT}`} />}
+            </button>
 
-                <button
-                  onClick={() => shareText(translatedText, 'target', `To (${toLang})`)}
-                  disabled={!translatedText.trim()}
-                  className="p-2 rounded hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition disabled:opacity-40"
-                  title="Share"
-                >
-                  {shared === 'target' ? (
-                    <Check className={`w-4 h-4 ${TEXT}`} />
-                  ) : (
-                    <Share2 className={`w-4 h-4 ${TEXT}`} />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <div className="p-4">
-              <div className={`w-full min-h-[220px] rounded-2xl p-4 bg-muted border border-border transition-colors`}>
-                {translatedText.trim() ? (
-                  <p className={`text-sm whitespace-pre-line leading-relaxed ${TEXT}`}>{translatedText}</p>
-                ) : (
-                  <div className={`h-[188px] flex items-center justify-center text-sm ${MUTED} italic`}>
-                    {isTranslating ? 'Translating...' : 'Izoboneka hano…'}
-                  </div>
-                )}
-              </div>
-
-              <div className={`mt-2 flex items-center justify-between text-xs ${MUTED2}`}>
-                <span />
-                <span>{translatedText.length}/8000</span>
-              </div>
-            </div>
+            <button
+              onClick={() => shareText(sourceText, "source", `${t.from} (${fromLang})`)}
+              disabled={!sourceText.trim()}
+              className="p-2 rounded-xl hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition disabled:opacity-40"
+              title={t.share}
+            >
+              {shared === "source" ? <Check className={`w-4 h-4 ${TEXT}`} /> : <Share2 className={`w-4 h-4 ${TEXT}`} />}
+            </button>
           </div>
         </div>
-        <Footer2 />
 
+        <div className="p-4 relative">
+          <textarea
+            ref={sourceTextareaRef}
+            value={sourceText}
+            onChange={(e) => {
+              handleSourceTextChange(e);
+              if (sourceTextareaRef.current) autoResize(sourceTextareaRef.current); // keep auto-height
+            }}
+            onFocus={() => {
+              if (suggestions.length > 0) setShowSuggestions(true);
+              if (sourceTextareaRef.current) autoResize(sourceTextareaRef.current);
+            }}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+            placeholder={t.placeholder}
+            rows={10} // ✅ makes it look tall by default (still auto-resizes)
+            className={`w-full min-h-[260px] max-h-[520px] resize-none rounded-2xl p-4 outline-none overflow-y-auto
+              bg-input dark:bg-gray-800 dark:border-[#147E4E]/20 border border-border ${TEXT} transition-all
+              placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background`}
+            maxLength={4000}
+          />
 
+          {showSuggestions && suggestions.length > 0 && fromLang === "Kirundi" && (
+            <div className="absolute top-14 left-4 right-4 z-50 bg-card dark:bg-gray-800 border border-border/10 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="px-3 py-1.5 bg-muted dark:bg-gray-700/50 border-b border-border/5 dark:border-white/5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground dark:text-gray-500">
+                Suggestions
+              </div>
+              <div className="max-h-[200px] overflow-y-auto no-scrollbar">
+                {suggestions.map((s) => (
+                  <button
+                    key={s.id}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setSourceText(s.word);
+                      setShowSuggestions(false);
+                      // after setting text, adjust height next tick
+                      requestAnimationFrame(() => {
+                        if (sourceTextareaRef.current) autoResize(sourceTextareaRef.current);
+                      });
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-accent/10 dark:hover:bg-green-900/10 text-foreground dark:text-white border-b border-border/5 dark:border-white/5 last:border-0 transition-colors flex flex-col gap-0.5"
+                  >
+                    <div className="font-semibold text-accent dark:text-green-400">{s.word}</div>
+                    <div className="text-xs text-muted-foreground dark:text-gray-400 truncate italic">{s.meaning}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className={`flex items-center justify-between text-xs ${MUTED2} mt-1`}>
+            <span />
+            <span>{sourceText.length}/4000</span>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT */}
+      <div className={`h-full rounded ${BORDER} ${SURFACE_LIGHT} ${SURFACE_DARK} shadow-sm overflow-hidden`}>
+        <div className="px-4 py-3 border-b border-black/10 dark:border-white/10 flex items-center justify-between">
+          <span className={`text-xs font-semibold ${TEXT}`}>
+            {t.to}: {toLang}
+          </span>
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => copyText(translatedText, "target")}
+              disabled={!translatedText.trim()}
+              className="p-2 rounded hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition disabled:opacity-40"
+              title="Copy"
+            >
+              {copied === "target" ? <Check className={`w-4 h-4 ${TEXT}`} /> : <Copy className={`w-4 h-4 ${TEXT}`} />}
+            </button>
+
+            <button
+              onClick={() => shareText(translatedText, "target", `To (${toLang})`)}
+              disabled={!translatedText.trim()}
+              className="p-2 rounded hover:bg-black/[0.05] dark:hover:bg-white/[0.06] transition disabled:opacity-40"
+              title="Share"
+            >
+              {shared === "target" ? <Check className={`w-4 h-4 ${TEXT}`} /> : <Share2 className={`w-4 h-4 ${TEXT}`} />}
+            </button>
+          </div>
+        </div>
+
+        <div className="p-4">
+          <div className={`w-full min-h-[260px] rounded-2xl p-4 bg-muted border border-border transition-colors`}>
+            {translatedText.trim() ? (
+              <p className={`text-sm whitespace-pre-line leading-relaxed ${TEXT}`}>{translatedText}</p>
+            ) : (
+              <div className={`h-[220px] flex items-center justify-center text-sm ${MUTED} italic`}>
+                {isTranslating ? "Translating..." : "Izoboneka hano…"}
+              </div>
+            )}
+          </div>
+
+          <div className={`mt-2 flex items-center justify-between text-xs ${MUTED2}`}>
+            <span />
+            <span>{translatedText.length}/8000</span>
+          </div>
+        </div>
       </div>
     </div>
+
+    <Footer2 />
+  </div>
+</div>
   )
 }

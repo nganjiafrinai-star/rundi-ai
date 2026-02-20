@@ -8,7 +8,8 @@ import {
   Check,
   ArrowRight,
   Star,
-  StarOff
+  StarOff,
+  SlidersHorizontal
 } from 'lucide-react'
 
 import { useChat } from '@/app/context/chatContext'
@@ -17,11 +18,34 @@ import { searchVerbs } from '@/app/api/services/verbs'
 import type { VerbEntry, TenseKey } from '@/app/api/types/verbs.types'
 import Footer2 from '../footer2'
 
-// VerbEntry is imported from '@/app/api/types/verbs.types'
+
+const VerbsLoadingSkeleton = () => (
+  <div className="space-y-4">
+    <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4">
+      <div className="space-y-4">
+        {Array.from({ length: 6 }).map((_, idx) => (
+          <div key={idx} className="p-3 rounded-xl bg-secondary/50 animate-pulse">
+            <div className="h-5 bg-slate-300 dark:bg-slate-700 rounded w-3/4 mb-2" />
+            <div className="h-3 bg-slate-200 dark:bg-slate-600 rounded w-1/2" />
+          </div>
+        ))}
+      </div>
+      <div className="space-y-4">
+        <div className="h-6 bg-slate-300 dark:bg-slate-700 rounded w-1/3" />
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, idx) => (
+            <div key={idx} className="h-12 bg-secondary/50 rounded animate-pulse" />
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+)
 
 export default function VerbsInterface() {
   const { currentSession, updateSession } = useChat()
   const { t } = useLanguage()
+  
   const [query, setQuery] = useState('')
   const [inputValue, setInputValue] = useState('')
   const [language, setLanguage] = useState<'Kirundi'>('Kirundi')
@@ -43,6 +67,15 @@ export default function VerbsInterface() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showSuggestions, setShowSuggestions] = useState(false)
+
+  const BG_LIGHT = 'bg-background'
+  const SURFACE_LIGHT = 'bg-card'
+  const BORDER = 'border border-border'
+  const TEXT = 'text-foreground'
+  const MUTED = 'text-muted-foreground'
+  const MUTED2 = 'text-muted-foreground/80'
+  const SOFT = 'bg-secondary'
+  const SELECTED_PILL = 'bg-green-600 text-white'
 
   useEffect(() => {
     if (currentSession?.state) {
@@ -256,9 +289,9 @@ export default function VerbsInterface() {
 
   const tenseTabs: { key: TenseKey; label: string }[] = [
     { key: 'kubu', label: 'Kubu' },
-    { key: 'kahises', label: "Kahise k'impitakivi" },
-    { key: 'Kahise', label: "Kahise k'indengagihe" },
-    { key: 'Kazoza', label: 'Kazoza' }
+    { key: 'kahise k\'imptakivi', label: "Kahise k'imptakivi" },
+    { key: 'kahise k\'indengagihe', label: "Kahise k'indengagihe" },
+    { key: 'kazoza', label: 'Kazoza' }
   ] as const
 
   const groupLabel = (g: string) => {
@@ -294,47 +327,21 @@ export default function VerbsInterface() {
     setShowSuggestions(false)
   }
 
-  const renderSkeleton = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4 animate-pulse">
-      <div className="rounded border border-border bg-card shadow-sm p-4 space-y-4">
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32" />
-        <div className="space-y-3">
-          {Array.from({ length: 4 }).map((_, idx) => (
-            <div key={idx} className="h-12 bg-gray-100 dark:bg-gray-800 rounded" />
-          ))}
-        </div>
-      </div>
-
-      <div className="rounded border border-border bg-card shadow-sm p-4 space-y-4">
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-40" />
-        <div className="h-10 bg-gray-100 dark:bg-gray-800 rounded" />
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, idx) => (
-            <div key={idx} className="h-10 bg-gray-100 dark:bg-gray-800 rounded" />
-          ))}
-        </div>
-      </div>
-    </div>
-  )
+  const renderSkeleton = () => <VerbsLoadingSkeleton />
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] bg-background p-4 md:p-6 flex flex-col pro-theme">
+    <div className={`min-h-[calc(100vh-3.5rem)] p-4 md:p-6 ${BG_LIGHT} flex flex-col`}>
       <style jsx global>{`
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
       <div className="flex-1 max-w-7xl mx-auto space-y-6">
-        <div className="rounded border border-border bg-card shadow-sm p-4">
+        <div className={`rounded ${BORDER} ${SURFACE_LIGHT} shadow-sm p-4`}>
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             <div className="flex-1 flex items-center gap-2">
               <div className="relative flex-1">
-                <Search className="w-4 h-4 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2" />
+                <Search className={`w-4 h-4 ${MUTED2} absolute left-4 top-1/2 -translate-y-1/2`} />
                 <input
                   value={inputValue}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => {
@@ -351,11 +358,12 @@ export default function VerbsInterface() {
                   }}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                   placeholder={t.search}
-                  className="w-full pl-11 pr-4 py-2 bg-input border border-border rounded text-sm text-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-all"
+                  className={`w-full pl-11 pr-4 py-2.5 text-sm bg-input border border-border rounded outline-none ${TEXT}
+                    placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background transition-all`}
                 />
 
                 {suggestions.length > 0 && showSuggestions && (
-                  <div className="absolute top-full left-0 right-0 z-10 mt-2 bg-card border border-border rounded shadow-lg overflow-hidden">
+                  <div className={`absolute top-full left-0 right-0 z-10 mt-2 ${BORDER} rounded shadow-lg overflow-hidden ${SURFACE_LIGHT}`}>
                     {suggestions.map((s) => (
                       <button
                         key={s.id}
@@ -365,70 +373,96 @@ export default function VerbsInterface() {
                           handleSearchSubmit(s.infinitive)
                           setShowSuggestions(false)
                         }}
-                        className="w-full text-left px-4 py-2 text-sm hover:bg-muted dark:hover:bg-gray-700 text-foreground dark:text-white border-b border-border/5 dark:border-white/5 last:border-0"
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-accent ${TEXT} border-b border-border last:border-0`}
                       >
                         <div className="font-semibold">{s.infinitive}</div>
-                        <div className="text-xs text-muted-foreground truncate">{s.meaning}</div>
+                        <div className="text-xs opacity-60 truncate">{s.meaning}</div>
                       </button>
                     ))}
                   </div>
                 )}
               </div>
-              <span className="text-white dark:text-white">
-                Kirundi
-              </span>
+
+              <span className={`px-3 py-2.5 text-sm rounded ${TEXT}`}>Kirundi</span>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              {showResults && (
-                <div className="text-xs text-muted-foreground dark:text-gray-400 px-2">{filtered.length} results</div>
-              )}
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded border border-border bg-input hover:bg-accent transition-colors">
+                <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
+                <select
+                  value={tense}
+                  onChange={(e) => setTense(e.target.value as TenseKey)}
+                  className={`text-sm bg-transparent outline-none ${TEXT} font-medium cursor-pointer`}
+                >
+                  <option value="kubu">Kubu (Present)</option>
+                  <option value="kahise k'imptakivi">Kahise k'imptakivi</option>
+                  <option value="kahise k'indengagihe">Kahise k'indengagihe</option>
+                  <option value="kazoza">Kazoza (Future)</option>
+                </select>
+              </div>
+
+              <button
+                onClick={() => setOnlyFavorites((v) => !v)}
+                className={[
+                  'px-4 py-2 text-xs rounded border border-border transition flex items-center gap-2 font-medium',
+                  onlyFavorites ? `${SELECTED_PILL}` : `${SOFT} ${TEXT} hover:bg-accent`,
+                ].join(' ')}
+              >
+                {onlyFavorites ? <Star className="w-4 h-4" /> : <StarOff className="w-4 h-4" />}
+                <span className="hidden sm:inline">{onlyFavorites ? 'Favorites' : 'All'}</span>
+              </button>
+            </div>
+
+            <div className={`text-xs ${MUTED} px-2`}>
+              {loading ? '...' : showResults ? `${filtered.length} results` : ''}
             </div>
           </div>
         </div>
 
+        {/* Main Content */}
         {showResults && (
           loading ? (
-            renderSkeleton()
+            <VerbsLoadingSkeleton />
           ) : error ? (
             <div className="rounded border border-red-200 bg-red-50 text-red-600 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-200 p-4 text-sm">
               {error}
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4">
-              <div className="rounded border border-border bg-card shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-200 dark:border-[#2A2A2A] flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-700 dark:text-gray-200">{t.verbs} • {language}</span>
-                  <span className="text-[11px] text-gray-500 dark:text-gray-400">{t.chooseVerb}</span>
+              {/* Left Panel - Verb List */}
+              <div className={`rounded ${BORDER} ${SURFACE_LIGHT} shadow-sm overflow-hidden`}>
+                <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+                  <span className={`text-xs font-semibold ${TEXT}`}>{t.verbs} • {language}</span>
+                  <span className={`text-[11px] ${MUTED2}`}>{t.chooseVerb}</span>
                 </div>
 
                 <div className="max-h-[420px] overflow-y-auto no-scrollbar">
                   {filtered.length === 0 ? (
-                    <div className="p-6 text-sm text-gray-500 dark:text-gray-400">{t.noVerbsFound}.</div>
+                    <div className={`p-6 text-sm ${MUTED}`}>{t.noVerbsFound}.</div>
                   ) : (
                     filtered.map((v) => (
                       <button
                         key={v.id}
                         onClick={() => setSelectedId(v.id)}
-                        className={`w-full text-left px-4 py-3 border-b border-gray-100 dark:border-[#2A2A2A] transition ${selected?.id === v.id
-                          ? 'bg-[#147E4E]/10 dark:bg-[#147E4E]/20'
-                          : 'hover:bg-gray-50 dark:hover:bg-[#2A2A2A]'
-                          }`}
+                        className={`w-full text-left px-4 py-3 border-b border-border transition ${selected?.id === v.id
+                          ? 'bg-green-600/10 text-green-600 font-medium border-green-600/20'
+                          : 'hover:bg-accent'
+                        }`}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-semibold text-gray-900 dark:text-white truncate">{v.infinitive}</span>
-                              <span className="text-[11px] px-2 py-0.5 rounded-full border border-gray-200 dark:border-[#2A2A2A] text-gray-600 dark:text-gray-300">
+                              <span className={`font-semibold ${selected?.id === v.id ? 'text-green-600' : TEXT} truncate`}>{v.infinitive}</span>
+                              <span className={`text-[11px] px-2 py-0.5 rounded-full border border-border ${MUTED}`}>
                                 {groupLabel(v.group ?? 'other')}
                               </span>
-                              {isFav(v.id) && <Star className="w-3.5 h-3.5 text-yellow-500" />}
+                              {isFav(v.id) && <Star className="w-3.5 h-3.5 text-yellow-500 fill-current" />}
                             </div>
 
-                            <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 mt-1">{v.meaning}</p>
+                            <p className={`text-xs ${MUTED} line-clamp-2 mt-1`}>{v.meaning}</p>
                           </div>
 
-                          <ArrowRight className="w-4 h-4 text-gray-400 mt-1" />
+                          <ArrowRight className={`w-4 h-4 ${MUTED} mt-1 flex-shrink-0`} />
                         </div>
                       </button>
                     ))
@@ -436,118 +470,71 @@ export default function VerbsInterface() {
                 </div>
               </div>
 
-              <div className="rounded border border-border bg-card shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-200 dark:border-[#2A2A2A] flex items-center justify-between">
+              {/* Right Panel - Verb Details */}
+              <div className={`rounded ${BORDER} ${SURFACE_LIGHT} shadow-sm overflow-hidden`}>
+                <div className="px-4 py-3 border-b border-border flex items-center justify-between">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">{t.conjugaison}</span>
+                      <span className={`text-xs font-semibold ${TEXT}`}>{t.conjugaison}</span>
 
                       {selected?.group && (
-                        <span className="text-[11px] px-2 py-0.5 rounded-full border border-gray-200 dark:border-[#2A2A2A] text-gray-600 dark:text-gray-300">
+                        <span className={`text-[11px] px-2 py-0.5 rounded-full border border-border ${MUTED}`}>
                           {groupLabel(selected.group)}
                         </span>
                       )}
-
-                      {selected && isFav(selected.id) && (
-                        <span className="text-[11px] px-2 py-0.5 rounded-full border border-yellow-300/60 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300">
-                          {t.favorites}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
-                      {selected ? `${selected.infinitive} — ${selected.meaning}` : t.chooseVerb}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={() => selected?.infinitive && copyText(selected.infinitive, 'inf')}
-                      className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-[#2A2A2A] transition"
+                      onClick={() => selected && copyText(selected.infinitive, 'inf')}
+                      className={`px-3 py-1.5 text-xs rounded border border-border ${SURFACE_LIGHT} ${TEXT} hover:bg-accent transition inline-flex items-center gap-2`}
                       title={t.copyInfinitive}
-                    >
-                      {copied === 'inf' ? (
-                        <Check className="w-4 h-4 text-gray-700 dark:text-gray-200" />
-                      ) : (
-                        <Copy className="w-4 h-4 text-gray-700 dark:text-gray-200" />
-                      )}
-                    </button>
-
-                    <button
-                      onClick={() => selected && shareText(sharePayload)}
-                      className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-[#2A2A2A] transition"
-                      title={t.share}
                       disabled={!selected}
                     >
-                      {sharedOk ? (
-                        <Check className="w-4 h-4 text-gray-700 dark:text-gray-200" />
-                      ) : (
-                        <Share2 className="w-4 h-4 text-gray-700 dark:text-gray-200" />
-                      )}
+                      {copied === 'inf' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      {t.copyInfinitive}
                     </button>
 
                     <button
                       onClick={() => selected && toggleFavorite(selected.id)}
-                      className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-[#2A2A2A] transition"
-                      title={selected && isFav(selected.id) ? 'Kura mu vyishimiwe' : 'Shira mu vyishimiwe'}
+                      className={`p-1.5 rounded border border-border ${isFav(selected?.id) ? SELECTED_PILL : `${SURFACE_LIGHT} ${TEXT} hover:bg-accent`} transition`}
+                      title={isFav(selected?.id) ? 'Remove from favorites' : 'Add to favorites'}
                       disabled={!selected}
                     >
-                      {selected && isFav(selected.id) ? (
-                        <Star className="w-4 h-4 text-yellow-500" />
-                      ) : (
-                        <StarOff className="w-4 h-4 text-gray-700 dark:text-gray-200" />
-                      )}
+                      <Star className={`w-4 h-4 ${isFav(selected?.id) ? 'fill-current' : ''}`} />
                     </button>
                   </div>
                 </div>
 
-                <div className="overflow-y-auto no-scrollbar max-h-[420px]">
-                  <div className="px-4 pt-4">
-                    <div className="flex flex-wrap gap-2">
-                      {tenseTabs.map((t) => (
-                        <button
-                          key={t.key}
-                          onClick={() => setTense(t.key)}
-                          className={`px-3 py-2 text-xs rounded-xl border transition ${tense === t.key
-                            ? 'border-[#147E4E] bg-[#147E4E]/10 dark:bg-[#147E4E]/20 text-[#147E4E]'
-                            : 'border-border dark:border-[#2A2A2A] bg-card dark:bg-[#1A1A1A] text-foreground dark:text-gray-200 hover:bg-muted dark:hover:bg-[#2A2A2A]'
-                            }`}
-                        >
-                          {t.label}
-                        </button>
+                <div className="p-4">
+                  <div className={`rounded-2xl border border-border ${SOFT} overflow-hidden`}>
+                    <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+                      <div className={`text-xs font-semibold ${TEXT}`}>
+                        {currentTable?.label ?? t.conjugaison}
+                      </div>
+
+                      <button
+                        onClick={() => selected && copyText(sharePayload, 'table')}
+                        className={`px-3 py-1.5 text-xs rounded border border-border ${SURFACE_LIGHT} ${TEXT} hover:bg-accent transition inline-flex items-center gap-2`}
+                        title={t.copyTense}
+                        disabled={!selected}
+                      >
+                        {copied === 'table' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        {t.copyTense}
+                      </button>
+                    </div>
+
+                    <div className="divide-y divide-border">
+                      {(currentTable?.rows ?? []).map((r, idx) => (
+                        <div key={idx} className="grid grid-cols-[140px_1fr] gap-3 px-4 py-3">
+                          <div className={`text-xs ${MUTED}`}>{r.person}</div>
+                          <div className={`text-sm font-semibold ${TEXT}`}>{r.form}</div>
+                        </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="p-4">
-                    <div className="rounded-2xl border border-border dark:border-[#2A2A2A] bg-muted dark:bg-[#2A2A2A] overflow-hidden">
-                      <div className="px-4 py-3 border-b border-border dark:border-[#2A2A2A] flex items-center justify-between">
-                        <div className="text-xs font-semibold text-foreground dark:text-gray-200">
-                          {currentTable?.label ?? t.conjugaison}
-                        </div>
-
-                        <button
-                          onClick={() => selected && copyText(sharePayload, 'table')}
-                          className="px-3 py-1.5 text-xs rounded-xl border border-border dark:border-[#2A2A2A] bg-card dark:bg-[#1A1A1A] text-foreground dark:text-gray-200 hover:bg-muted dark:hover:bg-[#2A2A2A] transition inline-flex items-center gap-2"
-                          title={t.copyTense}
-                          disabled={!selected}
-                        >
-                          {copied === 'table' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                          {t.copyTense}
-                        </button>
-                      </div>
-
-                      <div className="divide-y divide-border dark:divide-[#2A2A2A]">
-                        {(currentTable?.rows ?? []).map((r, idx) => (
-                          <div key={idx} className="grid grid-cols-[140px_1fr] gap-3 px-4 py-3">
-                            <div className="text-xs text-muted-foreground dark:text-gray-300">{r.person}</div>
-                            <div className="text-sm font-semibold text-foreground dark:text-white">{r.form}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                  </div>
                 </div>
               </div>
             </div>

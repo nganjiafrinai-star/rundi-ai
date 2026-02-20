@@ -212,7 +212,7 @@ export default function DictionaryInterface() {
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
-      <div className="flex-1 max-w-7xl mx-auto space-y-6">
+      <div className="flex-1 max-w-3xl mx-auto space-y-6">
         <div className={`rounded ${BORDER} ${SURFACE_LIGHT} shadow-sm p-4`}>
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
             <div className="flex-1 flex items-center gap-2">

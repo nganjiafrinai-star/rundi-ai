@@ -8,14 +8,23 @@ import type {
 
 function extractArticlesFromPayload(payload: any): any[] {
     if (!payload) return []
+    
+    // Handle the specific API schema: { totalArticles: number, articles: [...] }
+    if (payload.articles && Array.isArray(payload.articles)) {
+        return payload.articles
+    }
+    
+    // Fallback to other possible structures
     if (payload.response && Array.isArray(payload.response.results)) return payload.response.results
-    if (Array.isArray(payload)) return payload
-    if (Array.isArray(payload.articles)) return payload.articles
     if (Array.isArray(payload.results)) return payload.results
     if (Array.isArray(payload.items)) return payload.items
+    if (Array.isArray(payload.news)) return payload.news
     if (Array.isArray(payload.data?.articles)) return payload.data.articles
     if (Array.isArray(payload.data?.results)) return payload.data.results
+    if (Array.isArray(payload.data?.news)) return payload.data.news
     if (Array.isArray(payload.data)) return payload.data
+    if (Array.isArray(payload)) return payload
+    
     return []
 }
 
@@ -33,80 +42,157 @@ function toSafeArticleId(rawId: string, index: number): string {
 export async function searchNews(
     filters: NewsSearchFilters = {}
 ): Promise<NewsSearchResult> {
-    const { category = 'all', query = '', language = 'en' } = filters as any
+    const { category = 'all', query = 'science', language = 'fr' } = filters as any
 
     try {
-        const baseUrl = "https://content.guardianapis.com/search"
-        const cleanQuery = query.trim()
-        const GUARDIAN_API_KEY = "test" // Public test key provided by Guardian documentation
+        // Use the new local API endpoint
+        const baseUrl = "http://192.168.1.223:8006/news/search"
+        const cleanQuery = query.trim() || 'science'
+        
+        // Build query parameters
+        const params = new URLSearchParams({
+            q: cleanQuery,
+            lang: language,
+            country: 'fr',
+            max: '10'
+        })
 
-        const attempts: Record<string, string>[] = [
-            {
-                "api-key": GUARDIAN_API_KEY,
-                "show-fields": "all",
-                "lang": language,
-                ...(cleanQuery ? { q: cleanQuery } : {}),
-                ...(category !== 'all' ? { section: category } : {}),
-            },
-            {
-                "api-key": GUARDIAN_API_KEY,
-                "show-fields": "thumbnail,trailText,byline",
-                "lang": language,
-                ...(cleanQuery ? { q: cleanQuery } : {}),
-            },
-            {
-                "api-key": GUARDIAN_API_KEY,
-                "lang": language,
-            },
-        ]
+        const requestUrl = `${baseUrl}?${params.toString()}`
 
-        let lastError: string | null = null
-
-        for (const paramsObj of attempts) {
-            const params = new URLSearchParams(paramsObj)
-            const requestUrl = `${baseUrl}?${params.toString()}`
-
-            const response = await get<any>(requestUrl)
-            if (response.error) {
-                lastError = response.error
-                continue
-            }
-
-            const results = extractArticlesFromPayload(response.data)
-            if (!results.length) {
-                continue
-            }
-
-            const articles: NewsArticle[] = results.map((item: any, index: number) => {
-                const rawId = String(item.id || item.webUrl || `${Date.now()}-${index}`)
-                const safeId = toSafeArticleId(rawId, index)
-                const fields = item.fields || {}
-
-                return {
-                    id: safeId,
-                    title: item.webTitle || 'Untitled',
-                    description: fields.trailText || fields.standfirst || '',
-                    content: fields.bodyText || fields.body || '',
-                    category: item.sectionName || category,
-                    source: 'The Guardian',
-                    author: fields.byline || null,
-                    date: formatDate(item.webPublicationDate || new Date().toISOString()),
-                    readTime: calculateReadTime(fields.bodyText || fields.body || ''),
-                    image: fields.thumbnail || null,
-                    url: item.webUrl || '#',
-                    featured: index === 0,
-                }
-            })
-
-            return { articles, total: articles.length }
+        const response = await get<any>(requestUrl)
+        if (response.error) {
+            throw new Error(response.error)
         }
 
-        if (lastError) throw new Error(lastError)
-    } catch (error) {
-        console.error('Discover API error:', error)
-    }
+        const results = extractArticlesFromPayload(response.data)
+        if (!results.length) {
+            return { articles: [], total: 0 }
+        }
 
-    return { articles: [], total: 0 }
+        const articles: NewsArticle[] = results.map((item: any, index: number) => {
+            const rawId = String(item.url || `${Date.now()}-${index}`)
+            const safeId = toSafeArticleId(rawId, index)
+
+            return {
+                id: safeId,
+                title: item.title || 'Untitled',
+                description: item.description || '',
+                content: item.content || item.description || '',
+                category: category || 'general',
+                source: item.source?.name || 'Local News',
+                author: null,
+                date: formatDate(item.publishedAt || new Date().toISOString()),
+                readTime: calculateReadTime(item.content || item.description || ''),
+                image: item.image || null,
+                url: item.url || '#',
+                featured: index === 0,
+            }
+        })
+
+        return { 
+            articles, 
+            total: response.data?.totalArticles || articles.length 
+        }
+
+    } catch (error) {
+        console.error('News API error:', error)
+        
+        // Fallback to mock data if API fails
+        const fallbackArticles: NewsArticle[] = [
+            {
+                id: 'fallback-1',
+                title: 'Latest Science News',
+                description: 'Stay updated with the latest developments in science and technology.',
+                content: 'Breaking news and updates from the world of science.',
+                category: 'science',
+                source: 'Local News',
+                author: 'News Team',
+                date: 'Just now',
+                readTime: '2 min read',
+                image: null,
+                url: '#',
+                featured: true,
+            }
+        ]
+        return { articles: fallbackArticles, total: fallbackArticles.length }
+    }
+}
+
+export async function getTopHeadlines(
+    category: string = 'general',
+    language: string = 'fr'
+): Promise<NewsSearchResult> {
+    try {
+        // Use the top headlines API endpoint
+        const baseUrl = "http://192.168.1.223:8006/news/top-headlines"
+        
+        // Build query parameters
+        const params = new URLSearchParams({
+            category: category,
+            lang: language,
+            country: 'fr',
+            max: '10'
+        })
+
+        const requestUrl = `${baseUrl}?${params.toString()}`
+
+        const response = await get<any>(requestUrl)
+        if (response.error) {
+            throw new Error(response.error)
+        }
+
+        const results = extractArticlesFromPayload(response.data)
+        if (!results.length) {
+            return { articles: [], total: 0 }
+        }
+
+        const articles: NewsArticle[] = results.map((item: any, index: number) => {
+            const rawId = String(item.url || `top-${Date.now()}-${index}`)
+            const safeId = toSafeArticleId(rawId, index)
+
+            return {
+                id: safeId,
+                title: item.title || 'Untitled',
+                description: item.description || '',
+                content: item.content || item.description || '',
+                category: category || 'general',
+                source: item.source?.name || 'Local News',
+                author: null,
+                date: formatDate(item.publishedAt || new Date().toISOString()),
+                readTime: calculateReadTime(item.content || item.description || ''),
+                image: item.image || null,
+                url: item.url || '#',
+                featured: index === 0,
+            }
+        })
+
+        return { 
+            articles, 
+            total: response.data?.totalArticles || articles.length 
+        }
+
+    } catch (error) {
+        console.error('Top Headlines API error:', error)
+        
+        // Fallback to mock data if API fails
+        const fallbackArticles: NewsArticle[] = [
+            {
+                id: 'top-fallback-1',
+                title: 'Top News Headlines',
+                description: 'Stay updated with the latest top news headlines.',
+                content: 'Breaking news and top stories from around the world.',
+                category: category,
+                source: 'Local News',
+                author: 'News Team',
+                date: 'Just now',
+                readTime: '3 min read',
+                image: null,
+                url: '#',
+                featured: true,
+            }
+        ]
+        return { articles: fallbackArticles, total: fallbackArticles.length }
+    }
 }
 
 

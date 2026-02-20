@@ -1,4 +1,4 @@
-export type TenseKey = 'kubu' | 'kahises' | 'Kahise' | 'Kazoza' | 'Indagihe'
+export type TenseKey = 'kubu' | 'kahise k\'imptakivi' | 'kahise k\'indengagihe' | 'kazoza'
 
 export type VerbLanguage = 'Kirundi'
 

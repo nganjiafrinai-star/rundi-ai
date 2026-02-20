@@ -129,7 +129,7 @@ export default function NewsDetailPage() {
                     <div className="flex items-center justify-between py-6 border-y border-border dark:border-white/5 mb-8">
                         <div className="flex items-center gap-2">
                             <span className="text-sm font-bold text-muted-foreground dark:text-gray-300">
-                                Source: <span className="text-green-600">{article.source}</span>
+                                Source: <a href={article.url} className="text-green-600" target="_blank" rel="noopener noreferrer">{article.source}</a>
                             </span>
                         </div>
                         <div className="flex items-center gap-3">

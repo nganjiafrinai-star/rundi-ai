@@ -8,13 +8,25 @@ import type {
 import { get } from '../utils/api-client'
 import { API_ENDPOINTS, getEndpointUrl } from '../config/endpoints'
 
+function mapPersonLabel(person: string): string {
+  const mapping: Record<string, string> = {
+    'jewe': 'Jewe (I)',
+    'wewe': 'Wewe (You singular)',
+    'we': 'We (He/She)',
+    'twebwe': 'Twebwe (We)',
+    'mwebwe': 'Mwebwe (You plural)', 
+    'bobo': 'Bobo (They)'
+  }
+  return mapping[person] || person
+}
+
 function mapRawToVerbEntry(raw: any, index: number): VerbEntry {
   const conjugaisons: Partial<Record<TenseKey, ConjugationTable>> = {}
   const rawConj = raw?.conjugaison || {}
 
   const toRows = (obj: any) =>
     Object.entries(obj ?? {}).map(([person, form]) => ({
-      person: String(person),
+      person: mapPersonLabel(String(person)),
       form: String(form),
     }))
 
@@ -27,15 +39,15 @@ function mapRawToVerbEntry(raw: any, index: number): VerbEntry {
     }
   }
 
-  // Past Perfective mapping (Kahise k'impitakivi)
+  // Past Perfective mapping (Kahise k'imptakivi)
   const pastPerfectiveData =
-    rawConj["kahise k'impitakivi"] ||
     rawConj["kahise k'imptakivi"] ||
+    rawConj["kahise k'impitakivi"] ||
     rawConj.kahises
 
   if (pastPerfectiveData) {
-    conjugaisons.kahises = {
-      label: "Kahise k'impitakivi",
+    conjugaisons["kahise k'imptakivi"] = {
+      label: "Kahise k'imptakivi",
       rows: toRows(pastPerfectiveData),
     }
   }
@@ -46,7 +58,7 @@ function mapRawToVerbEntry(raw: any, index: number): VerbEntry {
     rawConj.Kahise
 
   if (pastIndeterminateData) {
-    conjugaisons.Kahise = {
+    conjugaisons["kahise k'indengagihe"] = {
       label: "Kahise k'indengagihe",
       rows: toRows(pastIndeterminateData),
     }
@@ -55,7 +67,7 @@ function mapRawToVerbEntry(raw: any, index: number): VerbEntry {
   // Future mapping
   const futureData = rawConj.kazoza || rawConj.Kazoza
   if (futureData) {
-    conjugaisons.Kazoza = {
+    conjugaisons.kazoza = {
       label: 'Kazoza',
       rows: toRows(futureData)
     }

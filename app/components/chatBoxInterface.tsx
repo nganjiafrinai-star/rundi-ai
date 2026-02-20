@@ -1,12 +1,25 @@
 'use client'
 
 import { useRef, useEffect, useState, type ChangeEvent, type KeyboardEvent, useMemo } from 'react'
-import { Send, Bot, Paperclip, ChevronDown, Copy, Share2, Pencil, Check, X, ArrowDown, Image, FileText, Loader2 } from 'lucide-react'
+import { Send, Bot, Paperclip, ChevronDown, Copy, Share2, Pencil, Check, X, ArrowDown, Image, FileText, Loader2, Square } from 'lucide-react'
 import { useChat } from '@/app/context/chatContext'
 import { useLanguage } from '@/app/context/languageContext'
 import { ChatDomain } from '@/app/api/types/chat.types'
 import ReactMarkdown from 'react-markdown'
 import Footer2 from './footer2'
+
+const CategoryIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    viewBox="0 0 32 32" 
+    className={className}
+    fill="currentColor"
+  >
+    <path d="M 15 3 L 15 8 L 17 8 L 17 3 Z M 7.5 6.09375 L 6.09375 7.5 L 9.625 11.0625 L 11.0625 9.625 Z M 24.5 6.09375 L 20.9375 9.625 L 22.375 11.0625 L 25.90625 7.5 Z M 16 9 C 12.144531 9 9 12.144531 9 16 C 9 19.855469 12.144531 23 16 23 C 19.855469 23 23 19.855469 23 16 C 23 12.144531 19.855469 9 16 9 Z M 16 11 C 18.773438 11 21 13.226563 21 16 C 21 18.773438 18.773438 21 16 21 C 13.226563 21 11 18.773438 11 16 C 11 13.226563 13.226563 11 16 11 Z M 3 15 L 3 17 L 8 17 L 8 15 Z M 24 15 L 24 17 L 29 17 L 29 15 Z M 9.625 20.9375 L 6.09375 24.5 L 7.5 25.90625 L 11.0625 22.375 Z M 22.375 20.9375 L 20.9375 22.375 L 24.5 25.90625 L 25.90625 24.5 Z M 15 24 L 15 29 L 17 29 L 17 24 Z" />
+  </svg>
+)
+
+const getCategoryIcon = () => CategoryIcon
 
 const getCategoryMetadata = (categoryName: string, t: any): { domain: ChatDomain; category: string } => {
   if (categoryName === t.healthChat) return { domain: 'sante', category: 'Santé' }
@@ -17,11 +30,14 @@ const getCategoryMetadata = (categoryName: string, t: any): { domain: ChatDomain
 }
 
 type ChatMsg = {
-  id: number
-  text: string
-  sender: 'user' | 'Rundi AI'
+  id: string
+  content: string
+  role: 'user' | 'assistant'
+  createdAt: number
   timestamp: string
   category?: string
+  replyTo?: string // for assistant only: the userMessageId it responds to
+  status?: 'done' | 'streaming' | 'error'
 }
 
 function nowTime() {
@@ -74,7 +90,19 @@ const TypewriterText = ({ text, onComplete }: { text: string; onComplete?: () =>
 
   const cleanText = text.replace(/<(think|thought|regex)>[\s\S]*?<\/\1>/gi, '').trim()
 
+  // Reset state when text prop changes (for regenerating messages)
   useEffect(() => {
+    setDisplayedText('')
+    setIndex(0)
+  }, [cleanText])
+
+  useEffect(() => {
+    // Don't start typing if cleanText is empty (placeholder message)
+    if (!cleanText) {
+      setDisplayedText('')
+      return
+    }
+    
     if (index < cleanText.length) {
       const timeout = setTimeout(() => {
         const chunk = cleanText.slice(index, index + 2)
@@ -82,10 +110,15 @@ const TypewriterText = ({ text, onComplete }: { text: string; onComplete?: () =>
         setIndex((prev) => prev + 2)
       }, 5)
       return () => clearTimeout(timeout)
-    } else if (onComplete) {
+    } else if (onComplete && cleanText) {
       onComplete()
     }
   }, [index, cleanText, onComplete])
+
+  // Show empty content if cleanText is empty (regenerating state)
+  if (!cleanText) {
+    return <div className="leading-relaxed text-foreground dark:text-gray-100"></div>
+  }
 
   return <MessageContent text={displayedText} isBot={true} />
 }
@@ -96,6 +129,7 @@ interface InputAreaProps {
   loading: boolean
   isTyping: boolean
   sendMessage: (overrideText?: string) => void
+  stopBotMessage: () => void
   handleKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void
   selectedCategory: string
   setSelectedCategory: (v: string) => void
@@ -118,6 +152,7 @@ const InputArea = ({
   loading,
   isTyping,
   sendMessage,
+  stopBotMessage,
   handleKeyDown,
   selectedCategory,
   setSelectedCategory,
@@ -133,6 +168,34 @@ const InputArea = ({
   attachmentRef,
   onFileUpload,
 }: InputAreaProps) => {
+  const { t } = useLanguage()
+
+  // Handle click outside and ESC key for categories popup
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (categoryRef.current && !categoryRef.current.contains(event.target as Node)) {
+        setIsCategoryOpen(false)
+      }
+    }
+
+    const handleEscapeKey = (event: Event) => {
+      const keyboardEvent = event as globalThis.KeyboardEvent
+      if (keyboardEvent.key === 'Escape') {
+        setIsCategoryOpen(false)
+      }
+    }
+
+    if (isCategoryOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleEscapeKey)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscapeKey)
+    }
+  }, [isCategoryOpen, setIsCategoryOpen, categoryRef])
+
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
@@ -144,7 +207,7 @@ const InputArea = ({
   }, [input, textareaRef])
 
   return (
-    <div className={`p-4 sm:p-6 dark:bg-gray-900 ${className}`}>
+    <div className={`dark:bg-gray-900 ${className}`}>
       <div className="mx-auto max-w-3xl">
         <div
           className="relative rounded-2xl
@@ -171,11 +234,14 @@ const InputArea = ({
             </div>
           </div>
 
+          
+
           <div className="flex items-center justify-between px-4 pb-2">
             <div className="relative" ref={categoryRef}>
               <button
                 type="button"
                 onClick={() => setIsCategoryOpen((v) => !v)}
+                aria-expanded={isCategoryOpen}
                 className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs
                   bg-muted/50 dark:bg-gray-800
                   text-foreground dark:text-gray-100
@@ -192,29 +258,46 @@ const InputArea = ({
 
               {isCategoryOpen && (
                 <div
-                  className="absolute bottom-full left-0 mb-2 w-56 rounded-xl overflow-hidden
-                  bg-card dark:bg-[#2A2B3D]
-                  border border-border dark:border-[#147E4E]/20 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-200"
+                  className={`absolute left-0 bottom-full mb-2 w-64 rounded bg-[#1a1b26]
+                  border border-white/10 shadow-2xl z-50 p-3
+                  transition-all duration-200
+                  ${isCategoryOpen 
+                    ? 'opacity-100 translate-y-0' 
+                    : 'opacity-0 translate-y-2 pointer-events-none'
+                  }`}
+                  role="menu"
+                  style={{
+                    animation: isCategoryOpen ? 'fadeInUp 200ms ease-out' : undefined
+                  }}
                 >
-                  <div className="max-h-[200px] overflow-y-auto custom-scrollbar p-2">
-                    {categories.map((c) => (
-                      <button
-                        type="button"
-                        key={c}
-                        onClick={() => {
-                          setSelectedCategory(c)
-                          setIsCategoryOpen(false)
-                        }}
-                        className={`block w-full px-3 py-2.5 text-left text-sm rounded-lg cursor-pointer transition-all duration-200
-                          ${
-                            selectedCategory === c
-                              ? 'bg-[#147E4E]/15 text-[#147E4E] font-medium dark:text-[#147E4E] border border-[#147E4E]/30'
-                              : 'text-muted-foreground dark:text-gray-200 hover:bg-muted dark:hover:bg-[#147E4E]/10'
-                          }`}
-                      >
-                        {c}
-                      </button>
-                    ))}
+                  <div className="text-white font-semibold text-sm px-2 py-2 mb-1">
+                    Super Rundi AI
+                  </div>
+                  <div className="max-h-[240px] overflow-y-auto space-y-1">
+                    {categories.map((categoryName) => {
+                      return (
+                        <button
+                          type="button"
+                          key={categoryName}
+                          onClick={() => {
+                            setSelectedCategory(categoryName)
+                            setIsCategoryOpen(false)
+                          }}
+                          role="menuitem"
+                          className={`flex items-center gap-3 px-3 py-2 rounded w-full text-left
+                            text-white/90 hover:bg-white/10 transition-colors duration-200
+                            cursor-pointer focus:outline-none focus:bg-white/10
+                            ${
+                              selectedCategory === categoryName
+                                ? 'bg-white/10 text-white font-medium'
+                                : ''
+                            }`}
+                        >
+                          <CategoryIcon className="w-5 h-5 text-white/80 flex-shrink-0" />
+                          <span className="truncate">{categoryName}</span>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -274,17 +357,22 @@ const InputArea = ({
               
               <button
                 type="button"
-                onClick={() => sendMessage()}
-                disabled={!input.trim() || loading || isTyping}
+                onClick={loading || isTyping ? stopBotMessage : () => sendMessage()}
+                disabled={!loading && !isTyping && !input.trim()}
                 className={`group flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200
                   ${
-                    input.trim() && !loading && !isTyping
+                    loading || isTyping
+                      ? 'bg-[#147E4E] hover:bg-[#116A41] active:scale-95 shadow-lg hover:shadow-xl'
+                      : input.trim() && !loading && !isTyping
                       ? 'bg-[#147E4E] hover:bg-[#116A41] active:scale-95 shadow-lg hover:shadow-xl'
                       : 'bg-muted-foreground/20 dark:bg-gray-700/50 cursor-not-allowed'
                   }`}
               >
                 {loading || isTyping ? (
-                  <Loader2 className="h-4 w-4 text-white animate-spin" />
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" fill="#147E4E" opacity="0.15"/>
+                    <rect x="8" y="8" width="8" height="8" rx="1.5" fill="white"/>
+                  </svg>
                 ) : (
                   <Send className="h-4 w-4 text-white group-hover:translate-x-0.5 transition-transform" />
                 )}
@@ -292,6 +380,11 @@ const InputArea = ({
             </div>
           </div>
         </div>
+        <div className="px-4 py-2">
+            <p className="text-xs text-muted-foreground/70 text-center">
+              Rundi AI can make mistakes. Please double-check responses.
+            </p>
+          </div>
       </div>
       <footer className="mt-auto w-full bg-gray-50 dark:bg-gray-900 ">
         <div className="max-w-3xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground dark:text-gray-400">
@@ -304,14 +397,14 @@ const InputArea = ({
               href="/condition"
               className="hover:text-[#147E4E] dark:hover:text-[#147E4E] transition-colors duration-200 font-medium"
             >
-              Conditions
+              Conditions d’utilisation
             </a>
 
             <a
               href="/policy"
               className="hover:text-[#147E4E] dark:hover:text-[#147E4E] transition-colors duration-200 font-medium"
             >
-              Privacy
+              Politique de confidentialité
             </a>
           </div>
         </div>
@@ -344,9 +437,9 @@ export default function ChatBoxInterface() {
 
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [activeBotId, setActiveBotId] = useState<number | null>(null)
+  const [activeBotId, setActiveBotId] = useState<string | null>(null)
 
-  const [editingMessageId, setEditingMessageId] = useState<number | null>(null)
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
   const [editedMessageContent, setEditedMessageContent] = useState('')
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
@@ -364,6 +457,7 @@ export default function ChatBoxInterface() {
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   
   const sendLock = useRef(false)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const scrollToBottom = () => {
     setIsAutoScrolling(true)
@@ -422,7 +516,7 @@ export default function ChatBoxInterface() {
 
   const historySig = useMemo(() => {
     const last = chatHistory[chatHistory.length - 1]
-    const lastKey = last ? `${last.id}:${last.sender}:${(last.text || '').length}` : 'none'
+    const lastKey = last ? `${last.id}:${last.role}:${(last.content || '').length}` : 'none'
     return `${chatHistory.length}|${lastKey}`
   }, [chatHistory])
 
@@ -432,16 +526,16 @@ export default function ChatBoxInterface() {
     const bId = currentSession?.state?.backendSessionId
     const nextState = { chatHistory, selectedCategory, backendSessionId: bId }
 
-    const lastBotMsg = [...chatHistory].reverse().find((msg) => msg.sender === 'Rundi AI' && msg.text?.trim())
+    const lastBotMsg = [...chatHistory].reverse().find((msg) => msg.role === 'assistant' && msg.content?.trim())
 
     const nextTitle = lastBotMsg
-      ? lastBotMsg.text.length > 25
-        ? lastBotMsg.text.substring(0, 25) + '...'
-        : lastBotMsg.text
+      ? lastBotMsg.content.length > 25
+        ? lastBotMsg.content.substring(0, 25) + '...'
+        : lastBotMsg.content
       : `Chat: ${selectedCategory}`
 
     const botPreviewText = lastBotMsg
-      ? lastBotMsg.text.substring(0, 50) + (lastBotMsg.text.length > 50 ? '...' : '')
+      ? lastBotMsg.content.substring(0, 50) + (lastBotMsg.content.length > 50 ? '...' : '')
       : 'Waiting for Rundi AI response...'
 
     const nextPreview = `Rundi AI: ${botPreviewText}`
@@ -492,7 +586,40 @@ export default function ChatBoxInterface() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const [copiedId, setCopiedId] = useState<number | null>(null)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+
+  const updateMessage = (id: string, newContent: string) => {
+    setChatHistory(prev => 
+      prev.map(msg => 
+        msg.id === id ? { ...msg, content: newContent } : msg
+      )
+    )
+  }
+
+  const findReplyTo = (userId: string): ChatMsg | null => {
+    return chatHistory.find(msg => 
+      msg.role === 'assistant' && msg.replyTo === userId
+    ) || null
+  }
+
+  const replaceAssistantAtIndex = (index: number, newMessage: ChatMsg) => {
+    setChatHistory(prev => {
+      const next = [...prev]
+      next[index] = newMessage
+      return next
+    })
+  }
+
+  const insertAfter = (userId: string, newMessage: ChatMsg) => {
+    setChatHistory(prev => {
+      const userIndex = prev.findIndex(msg => msg.id === userId)
+      if (userIndex === -1) return [...prev, newMessage]
+      
+      const next = [...prev]
+      next.splice(userIndex + 1, 0, newMessage)
+      return next
+    })
+  }
 
   const copyToClipboardFallback = (text: string) => {
     try {
@@ -518,7 +645,7 @@ export default function ChatBoxInterface() {
     }
   }
 
-  const copyToClipboard = async (text: string, id: number): Promise<boolean> => {
+  const copyToClipboard = async (text: string, id: string): Promise<boolean> => {
     let copied = false
 
     if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText && window.isSecureContext) {
@@ -543,7 +670,7 @@ export default function ChatBoxInterface() {
   }
 
   const handleShare = async (msg: ChatMsg) => {
-    const shareData = { title: 'Rundi AI Message', text: msg.text }
+    const shareData = { title: 'Rundi AI Message', text: msg.content }
 
     try {
       if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
@@ -551,32 +678,216 @@ export default function ChatBoxInterface() {
         return
       }
 
-      const copied = await copyToClipboard(msg.text, msg.id)
-      if (!copied) window.prompt('Copy this message:', msg.text)
+      const copied = await copyToClipboard(msg.content, msg.id)
+      if (!copied) window.prompt('Copy this message:', msg.content)
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return
-      const copied = await copyToClipboard(msg.text, msg.id)
-      if (!copied) window.prompt('Copy this message:', msg.text)
+      const copied = await copyToClipboard(msg.content, msg.id)
+      if (!copied) window.prompt('Copy this message:', msg.content)
     }
   }
 
   const handleEdit = (msg: ChatMsg) => {
     setEditingMessageId(msg.id)
-    setEditedMessageContent(msg.text)
+    setEditedMessageContent(msg.content)
   }
 
-  const saveEdit = (id: number) => {
+  const saveEdit = async (id: string, isResend: boolean = true) => {
     if (!editedMessageContent.trim()) return
-    setChatHistory((prev) => prev.map((msg) => (msg.id === id ? { ...msg, text: editedMessageContent } : msg)))
-    const newText = editedMessageContent
+    
+    console.log('saveEdit called with id:', id, 'content:', editedMessageContent)
+    
+    // Update the user message content
+    setChatHistory(prev => {
+      const updated = prev.map(msg => 
+        msg.id === id ? { ...msg, content: editedMessageContent } : msg
+      )
+      console.log('Updated chat history:', updated)
+      return updated
+    })
+    
+    if (isResend) {
+      setChatHistory(prev => {
+        const userIndex = prev.findIndex(msg => msg.id === id)
+        if (userIndex === -1) return prev
+        
+        const assistantReply = prev.find((msg, index) => 
+          index > userIndex && 
+          msg.role === 'assistant' && 
+          msg.replyTo === id
+        )
+        
+        console.log('Found assistant reply to replace:', assistantReply)
+        
+        if (assistantReply) {
+          const newPlaceholder: ChatMsg = {
+            id: `assistant-regenerating-${Date.now()}`, 
+            content: '', // Ensure completely empty content
+            role: 'assistant',
+            createdAt: Date.now(),
+            timestamp: nowTime(),
+            category: selectedCategory,
+            replyTo: id,
+            status: 'streaming'
+          }
+          
+          const assistantIndex = prev.findIndex(msg => msg.id === assistantReply.id)
+          const next = [...prev]
+          next.splice(assistantIndex, 1, newPlaceholder) 
+          
+          // Clear any previous typing state and set new one
+          setIsTyping(false)
+          setActiveBotId(null)
+          
+          // Set new typing states after a brief delay to ensure clean reset
+          setTimeout(() => {
+            setActiveBotId(newPlaceholder.id)
+            setIsTyping(true)
+          }, 50)
+          
+          setTimeout(() => regenerateResponse(id, editedMessageContent, newPlaceholder.id), 150)
+          
+          return next
+        }
+        return prev
+      })
+    }
+    
     setEditingMessageId(null)
     setEditedMessageContent('')
-    sendMessage(newText)
   }
 
   const cancelEdit = () => {
     setEditingMessageId(null)
     setEditedMessageContent('')
+  }
+
+  const regenerateResponse = async (userMessageId: string, userText: string, placeholderId?: string) => {
+    console.log('regenerateResponse called with:', userMessageId, userText, placeholderId)
+    
+    const session = currentSession ?? createNewSession(activePage)
+    if (!session) return
+    if (sendLock.current) return
+
+    sendLock.current = true
+    setLoading(true)
+
+    abortControllerRef.current = new AbortController()
+    const abortSignal = abortControllerRef.current.signal
+
+    const userID = FIXED_BACKEND_USER_ID
+    const { domain, category } = getCategoryMetadata(selectedCategory, t)
+    let currentBackendId = session?.state?.backendSessionId
+
+    try {
+      const payload = { 
+        message: userText, 
+        domain, 
+        category, 
+        language: 'rn', 
+        user_id: userID, 
+        session_id: currentBackendId,
+        editedMessageId: userMessageId // Signal this is an edit
+      }
+      
+      console.log('Sending regenerate request:', payload)
+      
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: abortSignal,
+      })
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}))
+        throw new Error(errData.error || `Server error: ${response.status}`)
+      }
+
+      if (abortSignal.aborted) return
+
+      const data = await response.json()
+      let answer = data.answer || data.reply || data.message || JSON.stringify(data)
+      answer = answer.replace(/<(think|thought|regex)>[\s\S]*?<\/\1>/gi, '').trim()
+
+      console.log('Received answer:', answer)
+
+      if (abortSignal.aborted) return
+
+      // Update the placeholder with the new response
+      setChatHistory(prev => {
+        const targetId = placeholderId || prev.find(msg => 
+          msg.role === 'assistant' && msg.replyTo === userMessageId
+        )?.id
+        
+        if (targetId) {
+          const assistantIndex = prev.findIndex(msg => msg.id === targetId)
+          if (assistantIndex !== -1) {
+            const updatedAssistant: ChatMsg = {
+              id: targetId,
+              content: answer,
+              role: 'assistant',
+              createdAt: Date.now(),
+              timestamp: nowTime(),
+              category: selectedCategory,
+              replyTo: userMessageId,
+              status: 'done'
+            }
+            
+            const next = [...prev]
+            next[assistantIndex] = updatedAssistant
+            console.log('Updated assistant message at index:', assistantIndex)
+            return next
+          }
+        }
+        return prev
+      })
+
+      setIsTyping(false)
+      setActiveBotId(null)
+      
+    } catch (err: any) {
+      console.error('Regenerate error:', err)
+      
+      if (err.name === 'AbortError' || abortSignal.aborted) return
+
+      // Update placeholder with error message
+      setChatHistory(prev => {
+        const targetId = placeholderId || prev.find(msg => 
+          msg.role === 'assistant' && msg.replyTo === userMessageId
+        )?.id
+        
+        if (targetId) {
+          const assistantIndex = prev.findIndex(msg => msg.id === targetId)
+          if (assistantIndex !== -1) {
+            const errorAssistant: ChatMsg = {
+              id: targetId,
+              content: err?.message || 'Error contacting server. Check backend connection.',
+              role: 'assistant',
+              createdAt: Date.now(),
+              timestamp: nowTime(),
+              category: selectedCategory,
+              replyTo: userMessageId,
+              status: 'error'
+            }
+            
+            const next = [...prev]
+            next[assistantIndex] = errorAssistant
+            return next
+          }
+        }
+        return prev
+      })
+      
+      setIsTyping(false)
+      setActiveBotId(null)
+    } finally {
+      if (!abortSignal.aborted) {
+        setLoading(false)
+        sendLock.current = false
+      }
+      abortControllerRef.current = null
+    }
   }
 
   const handleFileUpload = () => {
@@ -589,6 +900,18 @@ export default function ChatBoxInterface() {
       const fileName = files[0].name
       setInput((prev) => prev + (prev ? ' ' : '') + `[Attached: ${fileName}] `)
     }
+  }
+
+  const stopBotMessage = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+    
+    setLoading(false)
+    setIsTyping(false)
+    setActiveBotId(null)
+    sendLock.current = false
   }
 
   const sendMessage = async (overrideText?: string) => {
@@ -605,11 +928,13 @@ export default function ChatBoxInterface() {
     const userID = FIXED_BACKEND_USER_ID
 
     const userChat: ChatMsg = {
-      id: Date.now(),
-      text,
-      sender: 'user',
+      id: `user-${Date.now()}`,
+      content: text,
+      role: 'user',
+      createdAt: Date.now(),
       timestamp: nowTime(),
       category: selectedCategory,
+      status: 'done'
     }
 
     setChatHistory((prev) => {
@@ -629,6 +954,9 @@ export default function ChatBoxInterface() {
     setInput('')
     setLoading(true)
 
+    abortControllerRef.current = new AbortController()
+    const abortSignal = abortControllerRef.current.signal
+
     const { domain, category } = getCategoryMetadata(selectedCategory, t)
     let currentBackendId = session?.state?.backendSessionId
 
@@ -638,6 +966,7 @@ export default function ChatBoxInterface() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_id: userID, first_message: text }),
+          signal: abortSignal,
         })
 
         const sessionData = await sessionRes.json().catch(() => ({}))
@@ -664,6 +993,7 @@ export default function ChatBoxInterface() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
+        signal: abortSignal,
       })
 
       if (!response.ok) {
@@ -671,12 +1001,29 @@ export default function ChatBoxInterface() {
         throw new Error(errData.error || `Server error: ${response.status}`)
       }
 
+      if (abortSignal.aborted) {
+        return
+      }
+
       const data = await response.json()
       let answer = data.answer || data.reply || data.message || JSON.stringify(data)
       answer = answer.replace(/<(think|thought|regex)>[\s\S]*?<\/\1>/gi, '').trim()
 
-      const botChatId = Date.now() + 1
-      const botChat: ChatMsg = { id: botChatId, text: answer, sender: 'Rundi AI', timestamp: nowTime(), category: selectedCategory }
+      if (abortSignal.aborted) {
+        return
+      }
+
+      const botChatId = `assistant-${Date.now()}`
+      const botChat: ChatMsg = { 
+        id: botChatId, 
+        content: answer, 
+        role: 'assistant', 
+        createdAt: Date.now(),
+        timestamp: nowTime(), 
+        category: selectedCategory,
+        replyTo: userChat.id,
+        status: 'done'
+      }
 
       setIsTyping(true)
       setActiveBotId(botChatId)
@@ -695,12 +1042,19 @@ export default function ChatBoxInterface() {
         return next
       })
     } catch (err: any) {
+      if (err.name === 'AbortError' || abortSignal.aborted) {
+        return
+      }
+
       const botChat: ChatMsg = {
-        id: Date.now() + 1,
-        text: err?.message || 'Error contacting server. Check backend connection.',
-        sender: 'Rundi AI',
+        id: `error-${Date.now()}`,
+        content: err?.message || 'Error contacting server. Check backend connection.',
+        role: 'assistant',
+        createdAt: Date.now(),
         timestamp: nowTime(),
         category: selectedCategory,
+        replyTo: userChat.id,
+        status: 'error'
       }
       setChatHistory((prev) => {
         const next = [...prev, botChat]
@@ -716,8 +1070,11 @@ export default function ChatBoxInterface() {
         return next
       })
     } finally {
-      setLoading(false)
-      sendLock.current = false
+      if (!abortSignal.aborted) {
+        setLoading(false)
+        sendLock.current = false
+      }
+      abortControllerRef.current = null
     }
   }
 
@@ -756,6 +1113,7 @@ export default function ChatBoxInterface() {
               loading={loading}
               isTyping={isTyping}
               sendMessage={sendMessage}
+              stopBotMessage={stopBotMessage}
               handleKeyDown={handleKeyDown}
               selectedCategory={selectedCategory}
               setSelectedCategory={(c) => setSelectedCategoryIndex(chatCategories.indexOf(c))}
@@ -780,7 +1138,7 @@ export default function ChatBoxInterface() {
           <div 
             ref={messagesContainerRef}
             onScroll={handleScroll}
-            className="relative flex-1 overflow-y-auto px-4 sm:px-6 pt-4 pb-6 custom-scrollbar
+            className="relative flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 pt-4 pb-2 custom-scrollbar
                        bg-gray-50 dark:bg-gray-900
                        bg-gradient-to-b from-gray-50 via-gray-50/95 to-gray-50/90
                        dark:bg-gradient-to-b dark:from-gray-900 dark:via-gray-900/95 dark:to-gray-900/90"
@@ -790,12 +1148,12 @@ export default function ChatBoxInterface() {
                 <div 
                   key={msg.id} 
                   className={`group flex w-full animate-in fade-in slide-in-from-bottom-2 duration-500 ${
-                    msg.sender === 'user' ? 'justify-end' : 'justify-start'
+                    msg.role === 'user' ? 'justify-end' : 'justify-start'
                   }`}
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
-                  <div className={`flex gap-3 max-w-[80%] md:max-w-[70%]`}>
-                    {msg.sender === 'Rundi AI' && (
+                  <div className={`flex gap-3 max-w-[96%] md:max-w-[90%]`}>
+                    {msg.role === 'assistant' && (
                       <div className="flex-shrink-0">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#147E4E]/10 dark:bg-[#147E4E]/20">
                           <Bot className="h-4 w-4 text-[#147E4E]" />
@@ -806,8 +1164,8 @@ export default function ChatBoxInterface() {
                     <div className="flex-1">
                       <div
                         className={`rounded-2xl transition-all duration-200 text-chat-message ${
-                          msg.sender === 'user'
-                            ? 'bg-[#147E4E] hover:bg-[#116A41] text-white px-4 py-3 shadow-md hover:shadow-lg ml-auto max-w-[70%] break-all overflow-hidden whitespace-pre-wrap'
+                          msg.role === 'user'
+                            ? 'bg-[#147E4E] hover:bg-[#116A41] text-white px-4 py-3 shadow-md hover:shadow-lg ml-auto break-all overflow-hidden whitespace-pre-wrap'
                             : 'bg-white dark:bg-[#1A1B23] text-foreground dark:text-gray-100 px-4 py-3 shadow-sm hover:shadow-md border border-border dark:border-[#147E4E]/10'
                         }`}
                       >
@@ -837,18 +1195,18 @@ export default function ChatBoxInterface() {
                               </button>
                             </div>
                           </div>
-                        ) : msg.sender === 'Rundi AI' && msg.id === activeBotId ? (
-                          <TypewriterText text={msg.text} onComplete={() => setIsTyping(false)} />
+                        ) : msg.role === 'assistant' && msg.id === activeBotId ? (
+                          <TypewriterText text={msg.content} onComplete={() => setIsTyping(false)} />
                         ) : (
-                          <MessageContent text={msg.text} isBot={msg.sender === 'Rundi AI'} />
+                          <MessageContent text={msg.content} isBot={msg.role === 'assistant'} />
                         )}
                       </div>
 
                       {!editingMessageId && (
-                        <div className={`mt-2 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${msg.sender === 'user' ? 'flex-row-reverse' : ''}`}>
+                        <div className={`mt-2 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                           <div className="flex items-center gap-1">
                             <button
-                              onClick={() => copyToClipboard(msg.text, msg.id)}
+                              onClick={() => copyToClipboard(msg.content, msg.id)}
                               className="p-2 hover:bg-[#147E4E]/10 dark:hover:bg-[#147E4E]/20 rounded-lg transition-all duration-200 text-muted-foreground dark:text-gray-500 hover:text-[#147E4E] dark:hover:text-[#147E4E]"
                               title="Copy message"
                             >
@@ -859,7 +1217,7 @@ export default function ChatBoxInterface() {
                               )}
                             </button>
 
-                            {msg.sender === 'Rundi AI' ? (
+                            {msg.role === 'assistant' ? (
                               <button
                                 onClick={() => handleShare(msg)}
                                 className="p-2 hover:bg-[#147E4E]/10 dark:hover:bg-[#147E4E]/20 rounded-lg transition-all duration-200 text-muted-foreground dark:text-gray-500 hover:text-[#147E4E] dark:hover:text-[#147E4E]"
@@ -880,7 +1238,7 @@ export default function ChatBoxInterface() {
 
                           <div className="text-xs text-muted-foreground dark:text-gray-500 flex items-center gap-2">
                             <span>{msg.timestamp}</span>
-                            {msg.sender === 'Rundi AI' && msg.category && (
+                            {msg.role === 'assistant' && msg.category && (
                               <span className="text-[#147E4E]/70 dark:text-[#147E4E]/70">
                                 • {msg.category}
                               </span>
@@ -902,7 +1260,7 @@ export default function ChatBoxInterface() {
                 </div>
               )}
             </div>
-            <div ref={messagesEndRef} className="h-4" />
+            <div ref={messagesEndRef} className="h-1" />
             
             {showScrollButton && (
               <button
@@ -925,6 +1283,7 @@ export default function ChatBoxInterface() {
             loading={loading}
             isTyping={isTyping}
             sendMessage={sendMessage}
+            stopBotMessage={stopBotMessage}
             handleKeyDown={handleKeyDown}
             selectedCategory={selectedCategory}
             setSelectedCategory={(c) => setSelectedCategoryIndex(chatCategories.indexOf(c))}
@@ -943,4 +1302,26 @@ export default function ChatBoxInterface() {
       )}
     </div>
   )
+}
+
+const styles = `
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+`
+
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement('style')
+  styleSheet.textContent = styles
+  if (!document.head.querySelector('style[data-categories-popup]')) {
+    styleSheet.setAttribute('data-categories-popup', 'true')
+    document.head.appendChild(styleSheet)
+  }
 }
