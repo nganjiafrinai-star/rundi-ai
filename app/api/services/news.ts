@@ -45,11 +45,9 @@ export async function searchNews(
     const { category = 'all', query = 'science', language = 'fr' } = filters as any
 
     try {
-        // Use the new local API endpoint
         const baseUrl = "http://192.168.1.223:8006/news/search"
         const cleanQuery = query.trim() || 'science'
         
-        // Build query parameters
         const params = new URLSearchParams({
             q: cleanQuery,
             lang: language,
@@ -97,7 +95,6 @@ export async function searchNews(
     } catch (error) {
         console.error('News API error:', error)
         
-        // Fallback to mock data if API fails
         const fallbackArticles: NewsArticle[] = [
             {
                 id: 'fallback-1',
@@ -123,10 +120,8 @@ export async function getTopHeadlines(
     language: string = 'fr'
 ): Promise<NewsSearchResult> {
     try {
-        // Use the top headlines API endpoint
         const baseUrl = "http://192.168.1.223:8006/news/top-headlines"
         
-        // Build query parameters
         const params = new URLSearchParams({
             category: category,
             lang: language,

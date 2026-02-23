@@ -19,7 +19,6 @@ export default function DataControlsSection() {
         )
         
         if (confirmed) {
-            // Delete all sessions one by one
             allSessions.forEach((session: any) => {
                 deleteSession(session.id)
             })

@@ -140,16 +140,16 @@ export default function VerbsInterface() {
   }, [])
 
   const suggestions = useMemo(() => {
+    if (!inputValue.trim() || !showSuggestions) return []
     const trimmed = inputValue.trim().toLowerCase()
-    if (!trimmed) return []
 
     return allVerbs
       .filter((verb) =>
         verb.infinitive.toLowerCase().includes(trimmed) ||
         verb.meaning.toLowerCase().includes(trimmed)
       )
-      .slice(0, 6)
-  }, [inputValue, allVerbs])
+      .slice(0, 5)
+  }, [inputValue, allVerbs, showSuggestions])
 
   // Fetch data from API
   useEffect(() => {
@@ -347,9 +347,9 @@ export default function VerbsInterface() {
                   onChange={(e: ChangeEvent<HTMLInputElement>) => {
                     const nextValue = e.target.value
                     setInputValue(nextValue)
-                    setShowSuggestions(nextValue.trim().length > 0)
+                    setShowSuggestions(true)
                   }}
-                  onFocus={() => inputValue.trim() && setShowSuggestions(true)}
+                  onFocus={() => setShowSuggestions(true)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault()
@@ -414,7 +414,7 @@ export default function VerbsInterface() {
             </div>
 
             <div className={`text-xs ${MUTED} px-2`}>
-              {loading ? '...' : showResults ? `${filtered.length} results` : ''}
+              {loading ? '...' : `${filtered.length} results`}
             </div>
           </div>
         </div>

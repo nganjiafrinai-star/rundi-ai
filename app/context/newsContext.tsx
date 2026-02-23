@@ -47,16 +47,13 @@ export const NewsProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, []);
 
-    // Save favorites to localStorage
     useEffect(() => {
         if (!isInitialMount.current) {
             localStorage.setItem('rundi_news_favorites', JSON.stringify(favorites));
         }
     }, [favorites]);
 
-    const fetchNews = useCallback(async (force = false) => {
-        // If not forcing and params haven't changed, and we have articles, don't fetch
-        if (!force &&
+    const fetchNews = useCallback(async (force = false) => {        if (!force &&
             lastFetchParams.current.category === activeCategory &&
             lastFetchParams.current.query === searchQuery &&
             lastFetchParams.current.language === newsLanguage &&

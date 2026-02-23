@@ -58,7 +58,7 @@ const mapWeatherApiToUI = (raw: WeatherApiResponse): WeatherUIModel => {
 
 // --- API Service ---
 const fetchWeatherData = async (city: string = 'Bujumbura'): Promise<WeatherApiResponse> => {
-    const response = await fetch(`http://192.168.1.21:8005/weather/${encodeURIComponent(city.toLowerCase())}`, {
+    const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}`, {
         headers: {
             'accept': 'application/json',
         },

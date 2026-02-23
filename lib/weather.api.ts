@@ -1,7 +1,7 @@
 import { WeatherApiResponse } from './weather.types';
 
 export async function getWeather(city: string = 'Bujumbura'): Promise<WeatherApiResponse> {
-    const response = await fetch(`http://192.168.1.223:8005/weather/${encodeURIComponent(city.toLowerCase())}`, {
+    const response = await fetch(`/api/weather?city=${encodeURIComponent(city)}`, {
         headers: {
             'accept': 'application/json',
         },

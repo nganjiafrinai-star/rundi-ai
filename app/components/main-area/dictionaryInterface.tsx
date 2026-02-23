@@ -36,7 +36,6 @@ export default function DictionaryInterface() {
   const [favorites, setFavorites] = useState<Set<number>>(new Set())
   const [showSuggestions, setShowSuggestions] = useState(false)
 
-  // Load state from session
   useEffect(() => {
     if (currentSession?.state) {
       const s = currentSession.state
@@ -54,7 +53,6 @@ export default function DictionaryInterface() {
     }
   }, [currentSession?.id])
 
-  // Sync state to session
   useEffect(() => {
     if (!currentSession) return
 
@@ -74,7 +72,6 @@ export default function DictionaryInterface() {
     return () => clearTimeout(timer)
   }, [query, language, posFilter, onlyFavorites, selectedId, currentSession?.id])
 
-  // Fetch data from API
   useEffect(() => {
     const fetchData = async () => {
       if (data.length > 0) setSearching(true)

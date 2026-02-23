@@ -11,7 +11,7 @@ import Link from 'next/link'
 export default function NewsDetailPage() {
     const { id } = useParams()
     const router = useRouter()
-    const { getArticleById, toggleFavorite, favorites } = useNews()
+    const { getArticleById, toggleFavorite, favorites, articles } = useNews()
     const [article, setArticle] = React.useState<NewsArticle | null>(null)
     const [loading, setLoading] = React.useState(true)
 
@@ -163,7 +163,7 @@ export default function NewsDetailPage() {
                     Izindi nkuru zishobora kugushimisha
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {useNews().articles
+                    {articles
                         .filter(a => a.category === article.category && a.id !== article.id)
                         .slice(0, 3)
                         .map((item) => (

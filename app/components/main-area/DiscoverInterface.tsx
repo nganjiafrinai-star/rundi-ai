@@ -83,7 +83,7 @@ const WeatherCard = () => {
     setLoading(true)
     setError(null)
     try {
-      const resp = await fetch(`http://192.168.1.223:8005/weather/${encodeURIComponent(city.toLowerCase())}`, {
+      const resp = await fetch(`/api/weather?city=${encodeURIComponent(city)}`, {
         headers: { 'accept': 'application/json' }
       })
       if (!resp.ok) throw new Error('API Error')
@@ -195,6 +195,8 @@ const WATCHLIST_SLIDES: { key: SlideKey; title: string }[] = [
 
 const MARKET_SYMBOLS = ['AAPL', 'MSFT', 'TSLA', 'AMZN', 'NVDA', 'GOOGL'] as const
 const MAX_WATCH_ITEMS = 6
+const TIMEOUT_MS = 10000
+const MAX_RETRIES = 3
 
 const FALLBACK_TRENDS: WatchItem[] = [
   { name: 'Tech Innovation Surge', change: '+8.4%', up: true },
@@ -243,7 +245,7 @@ const WatchlistCard = () => {
     up: change >= 0,
   })
 
-  const fetchSlideData = React.useCallback(async (key: SlideKey) => {
+  const fetchSlideData = React.useCallback(async (key: SlideKey, retryCount: number = 0) => {
     const setError = (target: SlideKey | SlideKey[], message: string) => {
       const keys = Array.isArray(target) ? target : [target]
       setErrorMap((prev) => {
@@ -255,39 +257,49 @@ const WatchlistCard = () => {
       })
     }
 
-    // Handle suggestions from GNews API
     if (key === 'suggestions') {
       if (loadingMap.suggestions) return
       setLoadingMap((prev) => ({ ...prev, suggestions: true }))
       setErrorMap((prev) => ({ ...prev, suggestions: null }))
       
       try {
-        const apiKey = process.env.NEXT_PUBLIC_GNEWS_API_KEY || 'c4be0422fd7ae6ab3dadd277bc785a94'
-        const response = await fetch(`https://gnews.io/api/v4/search?q=tesla&apikey=${apiKey}`, {
+        const apiKey = process.env.NEXT_PUBLIC_GNEWS_API_KEY
+        
+        if (!apiKey) {
+          console.log('No GNews API key available, using fallback trends')
+          setCache((prev) => ({ ...prev, suggestions: FALLBACK_TRENDS }))
+          return
+        }
+        
+        const response = await fetch(`https://gnews.io/api/v4/search?q=investment%20trends&apikey=${apiKey}`, {
           headers: {
             'Accept': 'application/json',
           },
         })
         
         if (!response.ok) {
-          throw new Error(`GNews API error: ${response.status}`)
+          if (response.status === 403) {
+            console.log('GNews API access forbidden (likely quota exceeded), using fallback trends')
+            setCache((prev) => ({ ...prev, suggestions: FALLBACK_TRENDS }))
+            return
+          } else if (response.status === 429) {
+            throw new Error('API rate limit exceeded. Using cached trends.')
+          } else {
+            throw new Error(`API temporarily unavailable (${response.status})`)
+          }
         }
         
         const data = await response.json()
         
-        // Map GNews articles to WatchItem format
         const mappedSuggestions: WatchItem[] = (data.articles || [])
           .slice(0, MAX_WATCH_ITEMS)
           .map((article: any, index: number) => {
-            // Extract relevant fields from article
             const title = article.title || `News ${index + 1}`
             const publishedAt = new Date(article.publishedAt || Date.now())
-            const isRecent = (Date.now() - publishedAt.getTime()) < (24 * 60 * 60 * 1000) // within 24 hours
-            
-            // Generate trend based on recency and random factors
+            const isRecent = (Date.now() - publishedAt.getTime()) < (24 * 60 * 60 * 1000) 
             const randomTrend = (Math.random() * 12) + 3
             const changePercent = randomTrend.toFixed(1)
-            const isUp = isRecent || Math.random() > 0.4 // recent news tends to be "rising"
+            const isUp = isRecent || Math.random() > 0.4 
             
             return {
               name: title.length > 55 ? title.substring(0, 52) + '...' : title,
@@ -299,7 +311,9 @@ const WatchlistCard = () => {
         setCache((prev) => ({ ...prev, suggestions: mappedSuggestions }))
       } catch (err) {
         console.error('GNews API error:', err)
-        const message = err instanceof Error ? err.message : 'Failed to load news stories'
+        // For user-facing errors, provide helpful messages and always fallback to trends
+        const message = err instanceof Error ? err.message : 'API temporarily unavailable'
+        console.log('Using fallback investment trends due to API error')
         setError('suggestions', message)
         setCache((prev) => ({ ...prev, suggestions: FALLBACK_TRENDS }))
       } finally {
@@ -315,39 +329,132 @@ const WatchlistCard = () => {
 
     try {
       if (key === 'crypto') {
-        const resp = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=6&page=1&sparkline=false&price_change_percentage=24h')
-        if (!resp.ok) throw new Error('Failed to load cryptocurrencies')
-        const data = await resp.json()
-        const mapped: WatchItem[] = (Array.isArray(data) ? data : [])
-          .slice(0, MAX_WATCH_ITEMS)
-          .map((item: any) => {
-            const pct = Number(item.price_change_percentage_24h ?? 0)
-            return {
-              name: `${item.name} (${String(item.symbol ?? '').toUpperCase()})`,
-              change: `${pct.toFixed(2)}%`,
-              up: pct >= 0,
-            }
+        try {
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
+          
+          const resp = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false&price_change_percentage=24h,7d', {
+            signal: controller.signal,
+            headers: {
+              'Accept': 'application/json',
+            },
           })
-        setCache((prev) => ({ ...prev, crypto: mapped }))
-        return
+          
+          clearTimeout(timeoutId)
+          
+          if (!resp.ok) {
+            if (resp.status === 429) {
+              throw new Error('Rate limit exceeded. Please try again later.')
+            }
+            throw new Error(`Crypto API error: ${resp.status} ${resp.statusText}`)
+          }
+          
+          const data = await resp.json()
+          
+          if (!Array.isArray(data)) {
+            throw new Error('Invalid cryptocurrency data format')
+          }
+          
+          const mapped: WatchItem[] = data
+            .slice(0, MAX_WATCH_ITEMS)
+            .map((item: any) => {
+              const pct = Number(item.price_change_percentage_24h ?? 0)
+              const symbol = String(item.symbol ?? '').toUpperCase()
+              const name = item.name || `Coin ${symbol}`
+              
+              return {
+                name: `${name} (${symbol})`,
+                change: `${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%`,
+                up: pct >= 0,
+              }
+            })
+          
+          if (mapped.length === 0) {
+            throw new Error('No cryptocurrency data available')
+          }
+            
+          setCache((prev) => ({ ...prev, crypto: mapped }))
+          return
+        } catch (cryptoErr) {
+          if (retryCount < MAX_RETRIES && !(cryptoErr instanceof Error && cryptoErr.name === 'AbortError')) {
+            console.log(`Retrying crypto fetch, attempt ${retryCount + 1}/${MAX_RETRIES}`)
+            setTimeout(() => {
+              fetchSlideData(key, retryCount + 1)
+            }, Math.pow(2, retryCount) * 1000)
+            return
+          }
+          throw cryptoErr
+        }
       }
 
       if (key === 'markets') {
-        const token = process.env.NEXT_PUBLIC_FINNHUB_KEY ?? 'd69ija9r01qm5rv42b90d69ija9r01qm5rv42b9g'
-        if (!token) throw new Error('Missing Finnhub API key')
-        const quotes = await Promise.all(
-          MARKET_SYMBOLS.map(async (symbol) => {
-            const resp = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${token}`)
-            if (!resp.ok) throw new Error('Failed to load market quotes')
-            const data = await resp.json()
-            const current = Number(data?.c ?? 0)
-            const prevClose = Number(data?.pc ?? 0)
-            const percent = prevClose ? ((current - prevClose) / prevClose) * 100 : 0
-            return mapMarketItem(symbol, percent)
-          })
-        )
-        setCache((prev) => ({ ...prev, markets: quotes.slice(0, MAX_WATCH_ITEMS) }))
-        return
+        try {
+          const token = process.env.NEXT_PUBLIC_FINNHUB_KEY ?? 'd69ija9r01qm5rv42b90d69ija9r01qm5rv42b9g'
+          if (!token) throw new Error('Missing Finnhub API key')
+          
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
+          
+          const quotes = await Promise.all(
+            MARKET_SYMBOLS.map(async (symbol) => {
+              try {
+                const resp = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${token}`, {
+                  signal: controller.signal,
+                  headers: {
+                    'Accept': 'application/json',
+                  },
+                })
+                
+                if (!resp.ok) {
+                  console.warn(`Failed to fetch ${symbol}: ${resp.status}`)
+                  return null
+                }
+                
+                const data = await resp.json()
+                
+                if (data.error) {
+                  console.warn(`API error for ${symbol}:`, data.error)
+                  return null
+                }
+                
+                const current = Number(data?.c ?? 0)
+                const prevClose = Number(data?.pc ?? 0)
+                
+                if (current === 0 || prevClose === 0) {
+                  console.warn(`Invalid data for ${symbol}: current=${current}, previous=${prevClose}`)
+                  return null
+                }
+                
+                const percent = ((current - prevClose) / prevClose) * 100
+                return mapMarketItem(symbol, percent)
+              } catch (err) {
+                console.warn(`Error fetching ${symbol}:`, err)
+                return null
+              }
+            })
+          )
+          
+          clearTimeout(timeoutId)
+          
+          const validQuotes = quotes.filter(Boolean) as WatchItem[]
+          
+          if (validQuotes.length === 0) {
+            throw new Error('No market data available')
+          }
+          
+          setCache((prev) => ({ ...prev, markets: validQuotes.slice(0, MAX_WATCH_ITEMS) }))
+          return
+        } catch (marketErr) {
+          // Retry logic for markets
+          if (retryCount < MAX_RETRIES && !(marketErr instanceof Error && marketErr.name === 'AbortError')) {
+            console.log(`Retrying markets fetch, attempt ${retryCount + 1}/${MAX_RETRIES}`)
+            setTimeout(() => {
+              fetchSlideData(key, retryCount + 1)
+            }, Math.pow(2, retryCount) * 1000)
+            return
+          }
+          throw marketErr
+        }
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load data'
@@ -364,22 +471,22 @@ const WatchlistCard = () => {
   }, [activeSlide, cache, fetchSlideData])
 
   const renderSkeleton = () => (
-    <div className="space-y-3">
+    <div className="space-y-2 sm:space-y-3">
       {Array.from({ length: MAX_WATCH_ITEMS }).map((_, idx) => (
         <div
           key={idx}
-          className="flex items-center justify-between p-4 rounded-xl bg-white border border-gray-100 shadow-sm animate-pulse"
+          className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 shadow-sm animate-pulse"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gray-200 rounded-full" />
-            <div className="space-y-2">
-              <div className="h-4 w-32 bg-gray-200 rounded" />
-              <div className="h-3 w-20 bg-gray-100 rounded" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-200 dark:bg-gray-600 rounded-full" />
+            <div className="space-y-1 sm:space-y-2">
+              <div className="h-3 sm:h-4 w-28 sm:w-32 bg-gray-200 dark:bg-gray-600 rounded" />
+              <div className="h-2 sm:h-3 w-16 sm:w-20 bg-gray-100 dark:bg-gray-700 rounded hidden sm:block" />
             </div>
           </div>
           <div className="text-right space-y-1">
-            <div className="h-4 w-16 bg-gray-200 rounded ml-auto" />
-            <div className="h-3 w-12 bg-gray-100 rounded ml-auto" />
+            <div className="h-3 sm:h-4 w-12 sm:w-16 bg-gray-200 dark:bg-gray-600 rounded ml-auto" />
+            <div className="h-2 sm:h-3 w-8 sm:w-12 bg-gray-100 dark:bg-gray-700 rounded ml-auto hidden sm:block" />
           </div>
         </div>
       ))}
@@ -387,44 +494,44 @@ const WatchlistCard = () => {
   )
 
   const renderList = () => (
-    <div className="space-y-3">
+    <div className="space-y-2 sm:space-y-3">
       {slideItems.slice(0, MAX_WATCH_ITEMS).map((item, idx) => (
         <div
           key={`${item.name}-${idx}`}
-          className="flex items-center justify-between p-4 rounded-xl bg-white border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer group"
+          className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 hover:border-gray-200 dark:hover:border-gray-500 hover:shadow-md transition-all duration-200 cursor-pointer group"
         >
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
             <div className="flex-shrink-0">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+              <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${
                 item.up ? 'bg-green-500' : 'bg-red-500'
               }`}>
                 {item.name.charAt(0).toUpperCase()}
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-semibold text-black truncate group-hover:text-green-600 transition-colors">
+              <h4 className="text-sm font-semibold text-black dark:text-white truncate group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
                 {item.name}
               </h4>
-              <p className="text-xs text-gray-600 mt-0.5">
-                {currentSlide.key === 'suggestions' ? 'Tesla News' : 
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 hidden sm:block">
+                {currentSlide.key === 'suggestions' ? 'Investment News' : 
                  currentSlide.key === 'crypto' ? 'Cryptocurrency' :
                  currentSlide.key === 'markets' ? 'Stock Symbol' : 'Market Item'}
               </p>
             </div>
           </div>
           
-          <div className="text-right flex-shrink-0 ml-3">
-            <div className={`flex items-center gap-1.5 text-sm font-bold ${
-              item.up ? 'text-green-600' : 'text-red-500'
+          <div className="text-right flex-shrink-0 ml-2 sm:ml-3">
+            <div className={`flex items-center gap-1 sm:gap-1.5 text-sm font-bold ${
+              item.up ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'
             }`}>
               {item.up ? (
-                <ArrowUpRight className="w-4 h-4" />
+                <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4" />
               ) : (
-                <ArrowDownRight className="w-4 h-4" />
+                <ArrowDownRight className="w-3 h-3 sm:w-4 sm:h-4" />
               )}
-              <span>{item.change}</span>
+              <span className="text-xs sm:text-sm">{item.change}</span>
             </div>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 hidden sm:block">
               {item.up ? '↗ Rising' : '↘ Falling'}
             </p>
           </div>
@@ -434,46 +541,46 @@ const WatchlistCard = () => {
   )
 
   return (
-    <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-lg transition-all duration-200 hover:shadow-xl">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-        <h3 className="font-bold text-black flex items-center gap-3">
-          <div className="p-2 rounded-full bg-green-100">
-            <TrendingUp className="w-5 h-5 text-green-600" />
+    <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 border border-gray-200 dark:border-gray-700 shadow-lg transition-all duration-200 hover:shadow-xl">
+      <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between mb-4 sm:mb-6">
+        <h3 className="font-bold text-black dark:text-white flex items-center gap-3">
+          <div className="p-2 rounded-full bg-green-100 dark:bg-green-900/20">
+            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-500" />
           </div>
           <div>
-            <div className="text-lg">{currentSlide.title}</div>
-            <div className="text-xs text-gray-600">
-              {currentSlide.key === 'suggestions' ? 'Live Tesla news' : 'Real-time market data'}
+            <div className="text-base sm:text-lg">{currentSlide.title}</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">
+              {currentSlide.key === 'suggestions' ? 'Live investment news' : 'Real-time market data'}
             </div>
           </div>
         </h3>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between sm:justify-start gap-3 sm:gap-4">
           <div className="flex items-center gap-2">
-            <div className="text-xs text-gray-500">Page</div>
-            <span className="text-xs font-semibold text-black bg-gray-100 px-2 py-1 rounded-full">
+            <div className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">Page</div>
+            <span className="text-xs font-semibold text-black dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
               {activeSlide + 1}/{WATCHLIST_SLIDES.length}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               aria-label={`Refresh ${currentSlide.title.toLowerCase()}`}
               onClick={() => fetchSlideData(currentSlide.key)}
               disabled={isLoading}
-              className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="p-2 sm:p-2.5 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 touch-manipulation"
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             </button>
             <button
               aria-label="Previous slide"
               onClick={() => goToSlide('prev')}
-              className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-600 transition-all duration-200"
+              className="p-2 sm:p-2.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-green-100 dark:hover:bg-green-900/20 hover:text-green-600 dark:hover:text-green-400 transition-all duration-200 touch-manipulation"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               aria-label="Next slide"
               onClick={() => goToSlide('next')}
-              className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-green-100 hover:text-green-600 transition-all duration-200"
+              className="p-2 sm:p-2.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-green-100 dark:hover:bg-green-900/20 hover:text-green-600 dark:hover:text-green-400 transition-all duration-200 touch-manipulation"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -481,37 +588,43 @@ const WatchlistCard = () => {
         </div>
       </div>
 
-      <div className="min-h-[300px] flex flex-col justify-center">
+      <div className="min-h-[280px] sm:min-h-[300px] flex flex-col justify-center">
         {isLoading
           ? renderSkeleton()
           : slideError
             ? (
-              <div className="rounded-xl border border-red-200 bg-red-50 text-red-700 p-6 flex flex-col items-center gap-4 text-center">
-                <div className="p-3 rounded-full bg-red-100">
-                  <RefreshCw className="w-6 h-6 text-red-600" />
+              <div className="rounded-xl border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/10 text-yellow-700 dark:text-yellow-400 p-4 sm:p-6 flex flex-col items-center gap-3 sm:gap-4 text-center">
+                <div className="p-2 sm:p-3 rounded-full bg-yellow-100 dark:bg-yellow-900/20">
+                  <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 dark:text-yellow-500" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-black mb-1">Failed to load data</h4>
-                  <p className="text-sm text-gray-600">{slideError}</p>
+                  <h4 className="font-semibold text-black dark:text-white mb-1 text-sm sm:text-base">Using Trending Topics</h4>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 px-2">
+                    {slideError.includes('403') || slideError.includes('quota') || slideError.includes('forbidden') 
+                      ? 'News API unavailable - showing popular investment trends' 
+                      : 'Showing trending topics while we reconnect to news feeds'}
+                  </p>
                 </div>
-                <button
-                  onClick={() => fetchSlideData(currentSlide.key)}
-                  className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 transition-colors flex items-center gap-2"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  Try Again
-                </button>
+                {!slideError.includes('403') && !slideError.includes('quota') && !slideError.includes('forbidden') && (
+                  <button
+                    onClick={() => fetchSlideData(currentSlide.key)}
+                    className="px-4 py-2.5 sm:py-2 rounded-lg bg-yellow-600 dark:bg-yellow-700 text-white text-sm font-semibold hover:bg-yellow-700 dark:hover:bg-yellow-600 transition-colors flex items-center gap-2 touch-manipulation"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Try Again
+                  </button>
+                )}
               </div>
             )
             : slideItems.length > 0
               ? renderList()
               : (
-                <div className="text-center py-12">
-                  <div className="p-4 rounded-full bg-gray-100 w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                    <TrendingUp className="w-8 h-8 text-gray-400" />
+                <div className="text-center py-8 sm:py-12">
+                  <div className="p-3 sm:p-4 rounded-full bg-gray-100 dark:bg-gray-700 w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 dark:text-gray-500" />
                   </div>
-                  <h4 className="font-semibold text-black mb-1">No data available</h4>
-                  <p className="text-sm text-gray-600">Check back later for market updates</p>
+                  <h4 className="font-semibold text-black dark:text-white mb-1 text-sm sm:text-base">No data available</h4>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Check back later for market updates</p>
                 </div>
               )}
       </div>
@@ -631,6 +744,34 @@ export default function DiscoverInterface() {
   ]
 
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const [hasScrolledRight, setHasScrolledRight] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+
+  const checkScrollPosition = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current
+      setHasScrolledRight(scrollLeft > 0)
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth)
+    }
+  }
+
+  // Check scroll position on mount
+  React.useEffect(() => {
+    checkScrollPosition()
+  }, [])
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 200
+      scrollContainerRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      })
+      
+      // Check scroll position after animation completes
+      setTimeout(checkScrollPosition, 300)
+    }
+  }
 
   const handleShare = async (article: NewsArticle, e: React.MouseEvent) => {
     e.preventDefault()
@@ -654,16 +795,6 @@ export default function DiscoverInterface() {
       } catch (err) {
         console.error('Failed to copy text: ', err)
       }
-    }
-  }
-
-  const scroll = (direction: 'left' | 'right') => {
-    if (scrollContainerRef.current) {
-      const scrollAmount = 200
-      scrollContainerRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      })
     }
   }
 
@@ -699,15 +830,18 @@ export default function DiscoverInterface() {
           </div>
 
           <div className="relative flex items-center group">
-            <button
-              onClick={() => scroll('left')}
-              className="absolute left-0 z-10 p-1.5 rounded-full bg-card dark:bg-gray-800 shadow-lg border border-border dark:border-white/10 text-muted-foreground dark:text-gray-400 hover:text-green-600 dark:hover:text-green-500 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
+            {hasScrolledRight && (
+              <button
+                onClick={() => scroll('left')}
+                className="absolute left-0 z-10 p-1.5 rounded-full bg-card dark:bg-gray-800 shadow-lg border border-border dark:border-white/10 text-muted-foreground dark:text-gray-400 hover:text-green-600 dark:hover:text-green-500 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            )}
 
             <div
               ref={scrollContainerRef}
+              onScroll={checkScrollPosition}
               className="flex gap-2 overflow-x-auto scrollbar-hide py-1 px-8 items-center no-scrollbar"
               style={{ scrollBehavior: 'smooth' }}
             >
@@ -726,12 +860,14 @@ export default function DiscoverInterface() {
               ))}
             </div>
 
-            <button
-              onClick={() => scroll('right')}
-              className="absolute right-0 z-10 p-1.5 rounded-full bg-card dark:bg-gray-800 shadow-lg border border-border dark:border-white/10 text-muted-foreground dark:text-gray-400 hover:text-green-600 dark:hover:text-green-500 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+            {canScrollRight && (
+              <button
+                onClick={() => scroll('right')}
+                className="absolute right-0 z-10 p-1.5 rounded-full bg-card dark:bg-gray-800 shadow-lg border border-border dark:border-white/10 text-muted-foreground dark:text-gray-400 hover:text-green-600 dark:hover:text-green-500 transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>
